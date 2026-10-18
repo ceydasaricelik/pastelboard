@@ -86,21 +86,8 @@ test:
 # Read https://guides.rubyonrails.org/configuring.html#configuring-a-database
 # for a full overview on how database connection configuration can be specified.
 #
+# Single database (e.g. Render's Postgres): Solid Queue's tables live in the primary database
+# (see db/migrate/*_create_solid_queue_tables.rb), cache is in-memory and Action Cable is async.
 production:
-  primary: &primary_production
-    <<: *default
-    database: pastel_board_production
-    username: pastel_board
-    password: <%= ENV["PASTEL_BOARD_DATABASE_PASSWORD"] %>
-  cache:
-    <<: *primary_production
-    database: pastel_board_production_cache
-    migrations_paths: db/cache_migrate
-  queue:
-    <<: *primary_production
-    database: pastel_board_production_queue
-    migrations_paths: db/queue_migrate
-  cable:
-    <<: *primary_production
-    database: pastel_board_production_cable
-    migrations_paths: db/cable_migrate
+  <<: *default
+  url: <%= ENV.fetch("DATABASE_URL", "") %>
