@@ -1,0 +1,115 @@
+<div id="card_detail" class="fixed inset-0 z-40 flex items-start justify-center overflow-y-auto p-4 sm:p-10">
+  <%= link_to "", board_path(board), class: "fixed inset-0 bg-slate-900/30 backdrop-blur-[1px]", "aria-label": "Kartı kapat" %>
+
+  <div class="relative w-full max-w-2xl rounded-2xl bg-white shadow-xl ring-1 ring-gray-100">
+    <div class="flex items-start justify-between gap-4 border-b border-gray-100 px-6 py-4">
+      <div>
+        <p class="text-xs font-medium text-slate-400"><%= card.list.name %> listesinde</p>
+        <% if card.escalated? %>
+          <span class="mt-1 inline-block rounded-full bg-orange-100 px-2 py-0.5 text-xs font-semibold text-orange-600">SLA ihlali — eskale edildi</span>
+        <% elsif card.completed? %>
+          <span class="mt-1 inline-block rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700">Tamamlandı</span>
+        <% end %>
+      </div>
+      <%= link_to "✕", board_path(board), class: "rounded-lg px-2 py-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700", "aria-label": "Kapat" %>
+    </div>
+
+    <%= form_with model: card, class: "space-y-5 px-6 py-5" do |form| %>
+      <%= form.text_field :title, required: true, "aria-label": "Kart başlığı",
+            class: "w-full rounded-lg border border-transparent px-2 py-1 -mx-2 text-xl font-semibold text-slate-800 outline-none hover:border-gray-200 focus:border-violet-300 focus:ring-2 focus:ring-violet-100" %>
+
+      <div class="grid gap-5 sm:grid-cols-2">
+        <div>
+          <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">Etiketler</p>
+          <div class="flex flex-wrap gap-1.5">
+            <%= form.collection_check_boxes :label_ids, board.labels, :id, :name do |box| %>
+              <label class="cursor-pointer">
+                <%= box.check_box class: "peer sr-only" %>
+                <span class="<%= label_tone(box.object) %> inline-block rounded-md px-2.5 py-1 text-xs font-semibold text-white shadow-sm opacity-30 transition peer-checked:opacity-100 peer-checked:ring-2 peer-checked:ring-offset-1 peer-checked:ring-slate-400 hover:opacity-70"><%= box.text %></span>
+              </label>
+            <% end %>
+          </div>
+        </div>
+
+        <div>
+          <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">Üyeler</p>
+          <% if board.members.any? %>
+            <div class="flex flex-wrap gap-1.5">
+              <%= form.collection_check_boxes :member_ids, board.members, :id, :name do |box| %>
+                <label class="cursor-pointer">
+                  <%= box.check_box class: "peer sr-only" %>
+                  <span class="inline-flex items-center gap-1.5 rounded-full border border-gray-200 py-0.5 pl-0.5 pr-2.5 text-xs font-medium text-slate-500 transition peer-checked:border-violet-300 peer-checked:bg-violet-50 peer-checked:text-violet-700">
+                    <%= member_avatar(box.object, size: "size-6") %> <%= box.text %>
+                  </span>
+                </label>
+              <% end %>
+            </div>
+          <% else %>
+            <p class="text-sm text-slate-400">Panoya üstteki "Üyeler" menüsünden üye ekleyebilirsin.</p>
+          <% end %>
+        </div>
+      </div>
+
+      <div>
+        <%= form.label :due_date, "Teslim tarihi", class: "mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-400" %>
+        <%= form.date_field :due_date, value: card.due_date&.to_date,
+              class: "rounded-lg border border-gray-200 px-3 py-2 text-sm text-slate-600 outline-none focus:border-violet-300 focus:ring-2 focus:ring-violet-100" %>
+      </div>
+
+      <div>
+        <%= form.label :description, "Açıklama", class: "mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-400" %>
+        <%= form.text_area :description, rows: 4, placeholder: "Daha ayrıntılı bir açıklama ekle…",
+              class: "w-full rounded-xl border border-gray-200 px-3 py-2 text-sm text-slate-700 placeholder:text-slate-400 outline-none focus:border-violet-300 focus:ring-2 focus:ring-violet-100" %>
+      </div>
+
+      <%= form.submit "Kaydet", class: "cursor-pointer rounded-lg bg-violet-500 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-400" %>
+    <% end %>
+
+    <div class="border-t border-gray-100 px-6 py-5">
+      <% items = card.checklist_items %>
+      <div class="mb-3 flex items-center justify-between">
+        <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Kontrol listesi</p>
+        <% if items.any? %>
+          <span class="text-xs font-medium text-slate-500"><%= items.count(&:done) %>/<%= items.size %></span>
+        <% end %>
+      </div>
+
+      <% if items.any? %>
+        <% percent = items.count(&:done) * 100 / items.size %>
+        <div class="mb-3 flex items-center gap-3">
+          <span class="w-9 text-right text-xs font-semibold <%= percent == 100 ? "text-emerald-600" : "text-slate-500" %>">%<%= percent %></span>
+          <div class="h-2 flex-1 overflow-hidden rounded-full bg-slate-100 ring-1 ring-inset ring-slate-200/60">
+            <div class="h-full rounded-full bg-linear-to-r from-emerald-400 to-teal-500 transition-all duration-500" style="width: <%= percent %>%"></div>
+          </div>
+        </div>
+      <% end %>
+
+      <ul class="space-y-1">
+        <% items.each do |item| %>
+          <li class="group flex items-center gap-2 rounded-lg px-1 py-1 hover:bg-slate-50">
+            <%= button_to card_checklist_item_path(card, item), method: :patch, params: { checklist_item: { done: !item.done } },
+                  class: "flex size-5 cursor-pointer items-center justify-center rounded-md border #{item.done ? "border-emerald-400 bg-emerald-400 text-white" : "border-gray-300 bg-white"}",
+                  "aria-label": item.done ? "Tamamlanmadı olarak işaretle" : "Tamamlandı olarak işaretle" do %>
+              <% if item.done %>✓<% end %>
+            <% end %>
+            <span class="flex-1 text-sm <%= item.done ? "text-slate-400 line-through" : "text-slate-700" %>"><%= item.content %></span>
+            <%= button_to "Sil", card_checklist_item_path(card, item), method: :delete,
+                  class: "cursor-pointer rounded px-1.5 text-xs text-slate-300 opacity-0 group-hover:opacity-100 hover:text-red-500" %>
+          </li>
+        <% end %>
+      </ul>
+
+      <%= form_with model: [ card, ChecklistItem.new ], class: "mt-2 flex gap-2" do |form| %>
+        <%= form.text_field :content, required: true, placeholder: "Yeni madde ekle", autocomplete: "off",
+              class: "min-w-0 flex-1 rounded-lg border border-gray-200 px-3 py-1.5 text-sm outline-none focus:border-violet-300 focus:ring-2 focus:ring-violet-100" %>
+        <%= form.submit "Ekle", class: "cursor-pointer rounded-lg bg-slate-100 px-3 py-1.5 text-sm font-semibold text-slate-600 hover:bg-slate-200" %>
+      <% end %>
+    </div>
+
+    <div class="flex justify-end border-t border-gray-100 px-6 py-4">
+      <%= button_to "Kartı sil", card_path(card), method: :delete,
+            form: { data: { turbo_confirm: "Bu kart silinsin mi?" } },
+            class: "cursor-pointer rounded-lg px-3 py-1.5 text-sm font-medium text-red-500 hover:bg-red-50" %>
+    </div>
+  </div>
+</div>

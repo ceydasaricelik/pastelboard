@@ -1,0 +1,16 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+todo:
+  name: To Do
+  position: 1
+  board: one
+
+done:
+  name: Done
+  position: 2
+  board: one
+
+other:
+  name: To Do
+  position: 1
+  board: two

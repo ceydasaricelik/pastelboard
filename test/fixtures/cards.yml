@@ -1,0 +1,15 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  title: İlk kart
+  description: MyText
+  due_date: <%= 3.days.from_now.to_fs(:db) %>
+  position: 1
+  list: todo
+
+two:
+  title: İkinci kart
+  description: MyText
+  due_date: <%= 3.days.from_now.to_fs(:db) %>
+  position: 2
+  list: todo

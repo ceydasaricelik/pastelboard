@@ -1,0 +1,51 @@
+<section id="<%= dom_id list %>" class="<%= list_tone(list) %> flex flex-col min-w-[300px] max-w-[300px] w-[300px] flex-none rounded-2xl shadow-sm ring-1 p-3">
+  <header class="flex items-center justify-between gap-2 px-1 pb-3 flex-none">
+    <h2 class="flex min-w-0 items-center gap-2 font-semibold <%= list.overdue? ? "text-rose-700" : "text-slate-800" %>">
+      <% if list.overdue? %>
+        <svg class="size-4 shrink-0 text-rose-500" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+          <path fill-rule="evenodd" d="M8.49 2.6c.67-1.15 2.35-1.15 3.02 0l6.28 10.88c.67 1.15-.17 2.6-1.51 2.6H3.72c-1.34 0-2.18-1.45-1.51-2.6L8.49 2.6ZM10 6a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 10 6Zm0 8a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clip-rule="evenodd" />
+        </svg>
+      <% end %>
+      <span class="truncate"><%= list.name %></span>
+      <% if list.overdue? %>
+        <span class="shrink-0 rounded-full bg-rose-500 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm">SLA ihlali</span>
+      <% end %>
+    </h2>
+
+    <div class="flex items-center gap-1">
+      <span class="rounded-full bg-white/80 px-2 py-0.5 text-xs font-semibold text-slate-500"><%= list.cards.size %></span>
+      <details class="relative">
+        <summary class="list-none [&::-webkit-details-marker]:hidden cursor-pointer rounded-lg px-1.5 py-0.5 text-slate-400 hover:bg-white/70 hover:text-slate-700" aria-label="Liste işlemleri">•••</summary>
+        <div class="absolute right-0 z-20 mt-1 w-60 space-y-2 rounded-xl bg-white p-3 shadow-lg ring-1 ring-gray-100">
+          <%= form_with model: [ board, list ], class: "flex gap-2" do |form| %>
+            <%= form.text_field :name, required: true, "aria-label": "Liste adı",
+                  class: "min-w-0 flex-1 rounded-lg border border-gray-200 px-2 py-1.5 text-sm outline-none focus:border-violet-300 focus:ring-2 focus:ring-violet-100" %>
+            <%= form.submit "Kaydet", class: "cursor-pointer rounded-lg bg-violet-500 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-violet-400" %>
+          <% end %>
+          <%= button_to "Listeyi sil", board_list_path(board, list), method: :delete,
+                form: { data: { turbo_confirm: "\"#{list.name}\" listesi ve içindeki kartlar silinsin mi?" } },
+                class: "w-full cursor-pointer rounded-lg px-2 py-1.5 text-left text-sm font-medium text-red-500 hover:bg-red-50" %>
+        </div>
+      </details>
+    </div>
+  </header>
+
+  <%# The whole remaining column height is the drop zone, so short lists (e.g. Done) still accept cards. %>
+  <div class="flex-1 min-h-24 overflow-y-auto space-y-2.5 px-1 pb-2"
+       data-controller="sortable" data-sortable-list-id-value="<%= list.id %>" data-sortable-group-value="board-<%= board.id %>">
+    <%= render partial: "boards/kanban_card", collection: list.cards, as: :card %>
+  </div>
+
+  <details class="flex-none mt-1">
+    <summary class="list-none [&::-webkit-details-marker]:hidden cursor-pointer select-none rounded-xl px-3 py-2 text-sm font-medium text-slate-500 transition hover:bg-white/70 hover:text-slate-700">
+      + Yeni Görev Ekle
+    </summary>
+    <%= form_with model: [ board, list, Card.new ], class: "mt-2 space-y-2 rounded-xl bg-white p-3 shadow-sm ring-1 ring-gray-100" do |form| %>
+      <%= form.text_field :title, required: true, placeholder: "Görev başlığı", autocomplete: "off",
+            class: "w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 outline-none focus:border-violet-300 focus:ring-2 focus:ring-violet-100" %>
+      <%= form.date_field :due_date, "aria-label": "Teslim tarihi",
+            class: "w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-slate-600 outline-none focus:border-violet-300 focus:ring-2 focus:ring-violet-100" %>
+      <%= form.submit "Görevi ekle", class: "w-full cursor-pointer rounded-lg bg-violet-500 px-3 py-2 text-sm font-semibold text-white transition hover:bg-violet-400" %>
+    <% end %>
+  </details>
+</section>

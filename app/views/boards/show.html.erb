@@ -1,0 +1,94 @@
+<% content_for :title, @card ? "#{@card.title} · #{@board.name}" : @board.name %>
+<% content_for :full_width, true %>
+<% turbo_refreshes_with method: :morph, scroll: :preserve %>
+
+<div class="h-screen flex flex-col bg-slate-100 overflow-hidden">
+  <header class="flex-none flex flex-wrap items-end justify-between gap-4 px-6 pt-6 pb-5">
+    <div>
+      <div class="flex items-center gap-3 text-sm font-medium">
+        <span class="flex items-center gap-1.5 font-bold text-slate-700">
+          <%= image_tag "/icon.svg", alt: "", class: "size-5" %> PastelBoard
+        </span>
+        <span class="text-slate-300">/</span>
+        <%= link_to "← Panolar", boards_path, class: "text-violet-500 hover:text-violet-400" %>
+      </div>
+      <h1 class="mt-1 text-3xl font-bold tracking-tight text-slate-800"><%= @board.name %></h1>
+      <% if @board.description.present? %>
+        <p class="mt-1 text-slate-500"><%= @board.description %></p>
+      <% end %>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-3">
+      <div class="flex items-center gap-2 rounded-xl bg-white p-1 shadow-sm ring-1 ring-slate-200">
+        <%= button_to board_escalation_path(@board), title: "Geciken kartları şimdi Gecikenler listesine taşı",
+              class: "flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-semibold text-rose-600 hover:bg-rose-50" do %>
+          <svg class="size-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm.75-13a.75.75 0 0 0-1.5 0v5c0 .41.34.75.75.75h4a.75.75 0 0 0 0-1.5h-3.25V5Z" clip-rule="evenodd" />
+          </svg>
+          SLA kontrolü
+        <% end %>
+        <% if demo_time_travel? %>
+          <%= button_to board_escalation_path(@board, days: 2), title: "Demo: zamanı 2 gün ileri sarıp SLA kuralını çalıştır",
+                class: "cursor-pointer rounded-lg bg-rose-500 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-rose-400" do %>
+            ⏩ 2 gün ileri sar
+          <% end %>
+        <% end %>
+      </div>
+
+      <div class="flex -space-x-2">
+        <% @board.members.each do |member| %>
+          <%= member_avatar(member, size: "size-8") %>
+        <% end %>
+      </div>
+      <details class="relative">
+        <summary class="list-none [&::-webkit-details-marker]:hidden cursor-pointer rounded-xl bg-white px-3 py-2 text-sm font-semibold text-slate-600 shadow-sm ring-1 ring-slate-200 hover:text-slate-800">
+          Üyeler (<%= @board.members.size %>)
+        </summary>
+        <div class="absolute right-0 z-30 mt-2 w-72 space-y-3 rounded-2xl bg-white p-4 shadow-lg ring-1 ring-gray-100">
+          <% @board.members.each do |member| %>
+            <div class="flex items-center justify-between gap-2">
+              <span class="flex items-center gap-2 text-sm font-medium text-slate-700"><%= member_avatar(member) %> <%= member.name %></span>
+              <%= button_to "Çıkar", board_member_path(@board, member), method: :delete,
+                    class: "cursor-pointer rounded-md px-2 py-1 text-xs font-medium text-slate-400 hover:bg-red-50 hover:text-red-500" %>
+            </div>
+          <% end %>
+          <%= form_with model: [ @board, Member.new ], class: "flex gap-2 border-t border-gray-100 pt-3" do |form| %>
+            <%= form.text_field :name, required: true, placeholder: "Ad Soyad", autocomplete: "off",
+                  class: "min-w-0 flex-1 rounded-lg border border-gray-200 px-3 py-1.5 text-sm outline-none focus:border-violet-300 focus:ring-2 focus:ring-violet-100" %>
+            <%= form.submit "Ekle", class: "cursor-pointer rounded-lg bg-violet-500 px-3 py-1.5 text-sm font-semibold text-white hover:bg-violet-400" %>
+          <% end %>
+        </div>
+      </details>
+    </div>
+
+    <% if notice.present? || alert.present? %>
+      <div class="basis-full">
+        <% if notice.present? %>
+          <p id="notice" class="inline-block rounded-xl bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-600"><%= notice %></p>
+        <% end %>
+        <% if alert.present? %>
+          <p id="alert" class="inline-block rounded-xl bg-red-50 px-3 py-2 text-sm font-medium text-red-500"><%= alert %></p>
+        <% end %>
+      </div>
+    <% end %>
+  </header>
+
+  <div class="flex-1 min-h-0 flex flex-nowrap overflow-x-auto gap-4 px-6 pb-6">
+    <%= render partial: "boards/column", collection: @lists, as: :list, locals: { board: @board } %>
+
+    <section class="min-w-[300px] max-w-[300px] w-[300px] flex-none self-start">
+      <details class="rounded-2xl bg-white/60 shadow-sm ring-1 ring-slate-200">
+        <summary class="list-none [&::-webkit-details-marker]:hidden cursor-pointer select-none rounded-2xl px-4 py-3 text-sm font-semibold text-slate-500 transition hover:bg-white hover:text-slate-700">
+          + Liste Ekle
+        </summary>
+        <%= form_with model: [ @board, List.new ], class: "space-y-2 px-3 pb-3" do |form| %>
+          <%= form.text_field :name, required: true, placeholder: "Liste adı", autocomplete: "off",
+                class: "w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 outline-none focus:border-violet-300 focus:ring-2 focus:ring-violet-100" %>
+          <%= form.submit "Listeyi ekle", class: "w-full cursor-pointer rounded-lg bg-violet-500 px-3 py-2 text-sm font-semibold text-white transition hover:bg-violet-400" %>
+        <% end %>
+      </details>
+    </section>
+  </div>
+</div>
+
+<%= render "cards/detail", card: @card, board: @board if @card %>

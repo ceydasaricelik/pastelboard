@@ -1,0 +1,60 @@
+@import "tailwindcss";
+
+@theme {
+  --animate-sla-pulse: sla-pulse 2s ease-in-out infinite;
+
+  @keyframes sla-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgb(244 63 94 / 0.35); }
+    50% { box-shadow: 0 0 0 8px rgb(244 63 94 / 0); }
+  }
+}
+
+/* Thin, quiet scrollbars for the board and its columns. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(148 163 184 / 0.5) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 9999px;
+  background-clip: padding-box;
+  background-color: rgb(148 163 184 / 0.5);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: rgb(100 116 139 / 0.7);
+}
+
+/*
+  SortableJS states. Sortable takes single class names, so the Tailwind utilities are applied here.
+  These rules stay outside @layer on purpose: unlayered CSS outranks the card's own utility classes.
+*/
+
+/* Placeholder left in the list where the card will land. */
+.card-ghost {
+  @apply rounded-xl border-2 border-dashed border-violet-400 bg-violet-100/60 shadow-none;
+
+  & > * {
+    @apply invisible;
+  }
+}
+
+/* The floating copy that follows the pointer; no transition, or it trails behind the cursor. */
+.card-drag {
+  @apply rotate-2 scale-105 cursor-grabbing opacity-100 shadow-xl ring-2 ring-violet-300 transition-none;
+}
+
+/* Column currently under the pointer. */
+.drop-target {
+  @apply rounded-xl bg-white/50 outline-2 outline-dashed outline-offset-2 outline-violet-300;
+}

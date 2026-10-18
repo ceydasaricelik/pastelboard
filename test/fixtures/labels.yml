@@ -1,0 +1,14 @@
+urgent:
+  board: one
+  name: Acil
+  color: red
+
+design:
+  board: one
+  name: Tasarım
+  color: purple
+
+foreign:
+  board: two
+  name: Başka pano
+  color: blue
