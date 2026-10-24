@@ -22,7 +22,7 @@ Ajan panosu çalışmasının adım adım kayıt defteri. Her adımın sonunda b
 - Testler: 34 test, 114 doğrulama, 0 hata (RuboCop ve Brakeman temiz)
 - Commit mesajı: Adım 0: Hazırlık — AGENTS.md, CLAUDE.md, ILERLEME.md ve CHALLENGE_LOG.md ile çalışma düzeni kuruldu
 - Açık kalanlar / notlar: `PROJE_DURUMU.md` ve `odev.md` önceden takip edilmiyordu (untracked); bu commit'e yalnızca çalışma düzeni dosyaları alındı, ikisi dışarıda bırakıldı.
-- Ceyda'nın süresi:
+- Ceyda'nın süresi: yaklaşık 7 dk (tahmini)
 
 ## Adım 1 — Ajan panosunun çekirdeği
 - Tarih/saat: 2026-10-24 17:04:06 +03:00
@@ -31,7 +31,7 @@ Ajan panosu çalışmasının adım adım kayıt defteri. Her adımın sonunda b
 - Testler: 56 test, 209 doğrulama, 0 hata (34 eski + 22 yeni; RuboCop ve Brakeman temiz)
 - Commit mesajı: Adım 1: Ajan panosunun çekirdeği — Tick servisi, FakeLlm, insan aksiyonları ve demo seeder
 - Açık kalanlar / notlar: Toplam test sayısı 50'yi geçince Rails testleri otomatik paralel (thread) çalıştırıyor ve bu Windows makinede takılıyor; eski 34 testle zorla paralel çalıştırınca da takıldığı doğrulandı (sorun yeni kodda değil). `test_helper.rb`'de paralel eşiği 500'e çıkarıldı. Linux CI'da paralel çalışma denenmedi. Tick, aynı kartı eşzamanlı iki Tick'in ilerletmesine karşı yalnızca `open` için korumalı (koşullu UPDATE); `in_review` ve `rework` için kilit yok. Arayüz Adım 3'te.
-- Ceyda'nın süresi:
+- Ceyda'nın süresi: yaklaşık 15 dk (tahmini)
 
 ## Adım 2 — Gerçek LLM istemcisi (Groq) ve Tick sağlamlaştırması
 - Tarih/saat: 2026-10-24 17:32:46 +03:00
@@ -40,7 +40,7 @@ Ajan panosu çalışmasının adım adım kayıt defteri. Her adımın sonunda b
 - Testler: 81 test, 346 doğrulama, 0 hata (56 eski + 25 yeni; RuboCop ve Brakeman temiz). Testler ağa çıkmıyor.
 - Commit mesajı: Adım 2: Groq LLM istemcisi, satır kilidiyle Tick, LLM hatası olayı ve demo runner
 - Açık kalanlar / notlar: (1) Gerçek Groq çağrısı henüz denenmedi (anahtar ajanın ortamında yok); `reasoning_effort: "low"` ile ilk elle denemede 400 alınırsa alan kaldırılacak ve buraya not düşülecek. (2) Minitest 6'da `minitest/mock` ayrı gem olduğu için gem eklememek adına `test_helper.rb`'ye küçük bir `stub_class_method` yardımcısı yazıldı; Net::HTTP bununla taklit ediliyor. (3) Eşzamanlılık testi, testlerin tek bağlantılı işlem içinde çalışması yüzünden kilidin gerçek bekleme davranışını değil, kilit içindeki durum yeniden kontrolünü doğruluyor (eski anlık görüntüyle ilerleme atlanıyor, LLM çağrılmıyor). (4) `write` için `finish_reason: "length"` hata sayılmıyor; kesik metni mentor değerlendirir. (5) Kilit LLM çağrısını kapsadığı için bir işlem ve bağlantı çağrı süresince (en fazla ~25 sn) açık kalır. (6) Runner komutu: `ruby bin/rails runner "AgentBoards::DemoRun.call"` (simülasyon modunda dev veritabanında denendi: 2 kart ilerledi).
-- Ceyda'nın süresi:
+- Ceyda'nın süresi: yaklaşık 10 dk (tahmini)
 
 ## Adım 2b — Model düzeltmesi
 - Tarih/saat: 2026-10-24 18:39:27 +03:00
@@ -49,7 +49,7 @@ Ajan panosu çalışmasının adım adım kayıt defteri. Her adımın sonunda b
 - Testler: 85 test, 361 doğrulama, 0 hata (RuboCop ve Brakeman temiz)
 - Commit mesajı: Adım 2b: Model adları ENV'den (gpt-oss), write için reasoning_effort ve tur özetinde LLM hatası sayısı
 - Açık kalanlar / notlar: Gerçek Groq denemesi Ceyda'da; sonucu bekleniyor. Dev veritabanındaki eski demo panosunda ajanların model alanı hâlâ `llama-3.1-8b-instant` olabilir; `DemoRun.call` (ya da seeder) panoyu sıfırlayıp yeniden kurduğu için düzelir, `DemoRun.tick` düzeltmez. Bu commit ile Adım 2 ve 2b uzak depoya gitti (Adım 0 ve 1 daha önce push edilmişti).
-- Ceyda'nın süresi:
+- Ceyda'nın süresi: yaklaşık 40 dk (tahmini)
 
 ## Adım 2c — Uydurmaya karşı önlemler ve ağ hatasında yeniden deneme
 - Tarih/saat: 2026-10-24 19:11:23 +03:00
@@ -58,7 +58,7 @@ Ajan panosu çalışmasının adım adım kayıt defteri. Her adımın sonunda b
 - Testler: 103 test, 449 doğrulama, 0 hata (RuboCop ve Brakeman temiz)
 - Commit mesajı: Adım 2c: BİLGİ EKSİK çıktısı, katı mentor, met=false kuralı, ağ hatasında tek yeniden deneme
 - Açık kalanlar / notlar: Gerçek Groq denemesi Ceyda'da; sonucu bekleniyor (özellikle: eksik bilgili kart needs_human oluyor mu, kartlardan en az biri revise görüyor mu). Mentor bazı kriterleri hiç listelemeden pass derse kod kuralı bunu yakalamıyor (yalnızca met=false olanları yakalar). Yeniden deneme ve medium akıl yürütme bir kartta kilidin tutulma süresini ve token kullanımını artırır; ücretsiz kotada 429 görülürse llm_error olarak düşer.
-- Ceyda'nın süresi:
+- Ceyda'nın süresi: yaklaşık 20 dk (tahmini)
 
 ## Adım 2d — Ekip rehberi (mentorun bildiği kurallar)
 - Tarih/saat: 2026-10-24 19:32:38 +03:00
@@ -67,7 +67,7 @@ Ajan panosu çalışmasının adım adım kayıt defteri. Her adımın sonunda b
 - Testler: 112 test, 498 doğrulama, 0 hata (RuboCop ve Brakeman temiz)
 - Commit mesajı: Adım 2d: Mentorun ekip rehberi ve guideline_violations
 - Açık kalanlar / notlar: Karar: rehber panoda `guidelines` metni olarak tutuluyor ve şimdilik yalnızca seeder dolduruyor (düzenleme arayüzü yok). Gerçek Groq'ta strict şemaya eklenen yeni zorunlu alan denenmedi; model alanı vermezse `llm_error` düşer.
-- Ceyda'nın süresi:
+- Ceyda'nın süresi: yaklaşık 12 dk (tahmini)
 
 ## Adım 3 — Ajan panosu arayüzü
 - Tarih/saat: 2026-10-24 19:39:50 +03:00
@@ -76,7 +76,7 @@ Ajan panosu çalışmasının adım adım kayıt defteri. Her adımın sonunda b
 - Testler: 134 test, 651 doğrulama, 0 hata (22 yeni controller testi; RuboCop ve Brakeman temiz). Ayrıca dev sunucusunda (simülasyon modu) ajan panosu, kart detayı ve pano listesi 200 döndü.
 - Commit mesajı: Adım 3: Ajan panosu arayüzü — tur butonu, görev ekleme, kart detayı, insan aksiyonları ve demo sıfırlama
 - Açık kalanlar / notlar: Kararlar: (1) Tur senkron çalışıyor (istek içinde). (2) Görev eklerken en az bir kriter zorunlu (kriter yoksa mentor her şeyi onaylardı). (3) Ajan panosuna ait olmayan işlemler (`round`, `agent_tasks`) insan panosunda 404 veriyor. (4) Zaman çizelgesi saatleri `Istanbul` saat dilimine çevriliyor; uygulamanın genel saat dilimi ayarına dokunulmadı. (5) Tur süresi ölçümü: gerçek Groq anahtarı ajanın ortamında yok (ortam değişkenlerinde anahtar aramak izin sistemi tarafından reddedildi ve denenmedi), bu yüzden gerçek Groq ile tur süresi ÖLÇÜLEMEDİ; kart sınırı 3 olarak kaldı. Ceyda ölçecek: `ruby bin/rails runner "AgentBoards::DemoRun.call"` çıktısındaki "Süre" 30 sn'yi geçerse `AGENT_ROUND_LIMIT=2` ayarlanmalı (Render'da ortam değişkeni). Simülasyon modunda tur 0,3 sn sürdü. (6) Arayüz tarayıcıda gözle kontrol edilmedi; HTML çıktısı testlerle ve dev sunucusunda 200 yanıtıyla doğrulandı.
-- Ceyda'nın süresi:
+- Ceyda'nın süresi: yaklaşık 3 dk (tahmini)
 
 ## Adım 4 — CHALLENGE_LOG ve README
 - Tarih/saat: 2026-10-24 19:42:47 +03:00
@@ -85,7 +85,7 @@ Ajan panosu çalışmasının adım adım kayıt defteri. Her adımın sonunda b
 - Testler: 134 test, 651 doğrulama, 0 hata (RuboCop ve Brakeman temiz)
 - Commit mesajı: Adım 4: CHALLENGE_LOG kanıtları, demo senaryosu ve README'de ajan panosu bölümü
 - Açık kalanlar / notlar: Gerçek Groq'ta tur süresi ölçülmedi (30 sn'yi geçerse `AGENT_ROUND_LIMIT=2`); rehberli gerçek deneme, Render'da ortam değişkenleri/migration kontrolü ve canlı demo Ceyda'da.
-- Ceyda'nın süresi:
+- Ceyda'nın süresi: yaklaşık 2 dk (tahmini)
 
 ## Adım 5 — CI düzeltmesi (crass güvenlik ilanı)
 - Tarih/saat: 2026-10-24 20:52:01 +03:00
@@ -94,7 +94,7 @@ Ajan panosu çalışmasının adım adım kayıt defteri. Her adımın sonunda b
 - Testler: 134 test, 651 doğrulama, 0 hata (RuboCop ve Brakeman temiz)
 - Commit mesajı: Adım 5: crass 1.0.8'e güncellendi (GHSA-pq4g-8rxf-4g29), CI yeşile döndürülüyor
 - Açık kalanlar / notlar: gh CLI bu makinede yok; push sonrası CI sonucu GitHub'daki Actions sayfasından Ceyda tarafından görülmeli.
-- Ceyda'nın süresi:
+- Ceyda'nın süresi: yaklaşık 60 dk (tahmini)
 ## Adım 6 — Prompt ve arayüz düzeltmeleri
 - Tarih/saat: 2026-10-24 20:55:06 +03:00
 - Ne yapıldı: İşçi promptuna "Mentor geri bildirimindeki ve ders defterindeki kurallar kesindir. Bunları soru konusu yapma, uygula. BİLGİ EKSİK yalnızca kartta olmayan içerik bilgisi (ürün adı, özellik vb.) için kullanılır." eklendi; mentor promptuna reason, feedback, lesson ve guideline_violations alanlarının Türkçe yazılması talimatı eklendi. Kart detayında "Mentor geri bildirimi" artık yalnızca mentorun son incelemesindeki `feedback`i gösteriyor (mentorun `feedback`i inceleme olayının `data`sına da yazılıyor); ajanın sorusu "Ajanın sorusu" ve insan ipucu "İnsan ipucu" başlıklarıyla ayrı gösteriliyor (`card.feedback` artık doğrudan görünmüyor; soru ve ipucu olay kayıtlarından okunuyor). db:seed her deploy'da çalışıyor: `db/seeds.rb` yalnızca insan panosunu `find_or_create_by` ile kuruyor, ajan panosuna dokunmuyor; iki kez çalıştırınca kayıt sayısı değişmedi, kopya yok (düzeltme gerekmedi, test eklendi). README'nin yerel kurulum bölümüne Windows komutları eklendi (`ruby bin/rails tailwindcss:build`, `ruby bin/rails server`).
@@ -102,7 +102,7 @@ Ajan panosu çalışmasının adım adım kayıt defteri. Her adımın sonunda b
 - Testler: 139 test, 672 doğrulama, 0 hata (RuboCop ve Brakeman temiz)
 - Commit mesajı: Adım 6: İşçi ve mentor prompt düzeltmeleri, kart detayında soru/ipucu/mentor ayrımı, Windows çalıştırma komutları
 - Açık kalanlar / notlar: Karar: eski olaylarda (bu adımdan önce yazılanlar) mentor `feedback`i olay verisinde yok; bu kartlarda "Mentor geri bildirimi" kutusu görünmez, yeni turlarda görünür. Prompt değişiklikleri gerçek Groq'ta denenmedi.
-- Ceyda'nın süresi:
+- Ceyda'nın süresi: yaklaşık 3 dk (tahmini)
 ## Adım 7 — CHALLENGE_LOG son hali
 - Tarih/saat: 2026-10-24 20:55:38 +03:00
 - Ne yapıldı: CHALLENGE_LOG.md ödev isterlerine göre son haline getirildi. "Rehberli gerçek deneme yapılmadı" ve "tur süresi ölçülmedi" gibi geçersiz notlar kaldırıldı; Ceyda'nın yerelde yaptığı gerçek Groq denemesinin sonuçları kanıt olarak eklendi (kulaklık kartı mentor düzeltmesinden sonra Done, termos kartı tüm kriterler ✓ iken rehber ihlaliyle iki kez revise alıp insana devredildi, eksik bilgili kartta ajan soru sordu ve ipucundan sonra düzeltmeye döndü, tur süresi 1–7 sn). CI'ın teslim öncesi crass 1.0.7 ilanını (GHSA-pq4g-8rxf-4g29) yakalayıp düzeltildiği kısa bir notla yazıldı. Yeni alt bölümler: "Deploy ve coding agent kuralları" (Render build komutu, ortam değişkenleri, tek veritabanı + SOLID_QUEUE_IN_PUMA, CLAUDE.md → @AGENTS.md, ILERLEME.md) ve "Fark katmanı" (agent-first ve LLM zekâsı, slop testi cümlesi). Adım tablosuna 4, 5, 6 ve 7 satırları ve gerçek commit linkleri eklendi, test sayısı 139'a, demo senaryosu gerçek davranışa göre güncellendi. Zaman bölümü yeniden hesaplandı. Başlıklar ilk prompttaki listeyle birebir aynı; `[CEYDA YAZACAK]` yerlerine dokunulmadı.
@@ -110,7 +110,7 @@ Ajan panosu çalışmasının adım adım kayıt defteri. Her adımın sonunda b
 - Testler: 139 test, 672 doğrulama, 0 hata (RuboCop ve Brakeman temiz)
 - Commit mesajı: Adım 7: CHALLENGE_LOG son hali — gerçek deneme kanıtları, CI notu, deploy kuralları ve fark katmanı
 - Açık kalanlar / notlar: Adım 6'daki prompt değişiklikleri gerçek Groq'ta henüz denenmedi. Termos kartının insana devredilmesi (işçi dersi iki denemede uygulayamadı) CHALLENGE_LOG'da dürüstçe yazıldı. Render start komutu repoda yok, yalnızca build komutu Ceyda'dan alındı.
-- Ceyda'nın süresi:
+- Ceyda'nın süresi: yaklaşık 2 dk (tahmini)
 ## Adım 7b — Commit linki
 - Tarih/saat: 2026-10-24 21:09:26 +03:00
 - Ne yapıldı: CHALLENGE_LOG adım tablosunda Adım 7 satırındaki "(bu commit)" yerine gerçek commit linki (0eb98a7) yazıldı.
@@ -118,4 +118,12 @@ Ajan panosu çalışmasının adım adım kayıt defteri. Her adımın sonunda b
 - Testler: 139 test, 672 doğrulama, 0 hata (yalnızca belge değişti; RuboCop ve Brakeman temiz)
 - Commit mesajı: Adım 7b: CHALLENGE_LOG tablosuna Adım 7 commit linki
 - Açık kalanlar / notlar: Yok.
-- Ceyda'nın süresi:
+- Ceyda'nın süresi: yaklaşık 10 dk (tahmini)
+## Adım 8 — Teslim
+- Tarih/saat: 2026-10-24 23:25:14 +03:00
+- Ne yapıldı: CHALLENGE_LOG.md'deki üç `[CEYDA YAZACAK]` yeri dolduruldu: "Bu ürüne kim, neden para ödüyor?" (Trello/Atlassian ücretli planları, fiyat yok), "İnsan zamanı" (yaklaşık 3,5 saat, tahmini; Claude Code tarafından yazıldığı notuyla) ve "Karar" başlığı "Pivot" olarak yeniden yazıldı (aynı motor yeni kullanıcı, Jira ve Linear kaynakları, MAST ve kendi uydurma bulgumuz, maliyet basamağı, risk, sonraki adım). Adım tablosundaki Adım 7 satırının bozulan ayracı düzeltildi. ILERLEME.md'deki boş "Ceyda'nın süresi" satırları adımlar arası zaman damgalarına göre tahmini dakikalarla dolduruldu (toplam ≈ 184 dk + bu adım). CHALLENGE_LOG'da başka `[CEYDA ...]` ya da boş yer kalmadı (yalnızca "İlk prompt" kod bloğu, ilk mesajı olduğu gibi içeriyor).
+- Eklenen/değişen dosyalar: CHALLENGE_LOG.md, ILERLEME.md
+- Testler: 139 test, 672 doğrulama, 0 hata (RuboCop ve Brakeman temiz)
+- Commit mesajı: Adım 8: Teslim — CHALLENGE_LOG'daki boş yerler dolduruldu, ILERLEME süreleri tahmini olarak girildi
+- Açık kalanlar / notlar: İnsan süresi ölçülmüş değil, tahmindir. Karar bölümünün başlığı ödev metnindeki "Karar" yerine istek üzerine "Pivot" oldu.
+- Ceyda'nın süresi: yaklaşık 25 dk (tahmini)

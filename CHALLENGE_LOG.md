@@ -6,7 +6,7 @@ Trello'dan ilham alan **PastelBoard**: Kanban panosu, sürükle-bırak ve süres
 
 - Canlı URL: https://pastelboard-web.onrender.com
 - Geçen haftanın son commit'i: https://github.com/ceydasaricelik/pastelboard/commit/27d0230
-- Bu ürüne kim, neden para ödüyor? [CEYDA YAZACAK]
+- Bu ürüne kim, neden para ödüyor? Trello'ya (Atlassian) küçük işletmeler, pazarlama ve yazılım ekipleri ücretli planlar (Standard, Premium, Enterprise) için para ödüyor. Gerekçeleri: sınırsız pano ve otomasyon (Butler), takvim, zaman çizelgesi ve tablo görünümleri, yönetici ve güvenlik kontrolleri. Yani ekipler, işin görünür ve takip edilebilir olması için ödüyor.
 
 ## Acı
 
@@ -40,7 +40,7 @@ Güncel durum: **139 test, 672 doğrulama, 0 hata**; RuboCop, Brakeman, bundler-
 | 4 — Belgeler | Bu dosya ve README'deki "Ajan panosu" bölümü. | [6d09809](https://github.com/ceydasaricelik/pastelboard/commit/6d09809) | 134 |
 | 5 — CI düzeltmesi | GitHub CI'daki bundler-audit adımı `crass` 1.0.7 için GHSA-pq4g-8rxf-4g29 ilanını yakaladı; `crass` 1.0.8'e güncellendi, CI'ın tüm adımları yerelde temiz çalıştı. | [16e6332](https://github.com/ceydasaricelik/pastelboard/commit/16e6332) | 134 |
 | 6 — Prompt ve arayüz | İşçi promptuna "mentor kuralları kesindir, BİLGİ EKSİK yalnızca eksik içerik için" eklendi; mentor alanları Türkçe; kart detayında "Mentor geri bildirimi", "Ajanın sorusu" ve "İnsan ipucu" ayrı başlıklarda; `db:seed` tekrarının kopya üretmediği testle doğrulandı; README'ye Windows komutları. | [30af5cd](https://github.com/ceydasaricelik/pastelboard/commit/30af5cd) | 139 |
-| 7 — Son hali | Bu dosya: gerçek deneme kanıtları, CI notu, deploy ve fark katmanı bölümleri. [0eb98a7](https://github.com/ceydasaricelik/pastelboard/commit/0eb98a7) | 139 |
+| 7 — Son hali | Bu dosya: gerçek deneme kanıtları, CI notu, deploy ve fark katmanı bölümleri. | [0eb98a7](https://github.com/ceydasaricelik/pastelboard/commit/0eb98a7) | 139 |
 
 ### CI teslimden önce yeni bir güvenlik ilanı yakaladı
 
@@ -122,7 +122,9 @@ bundle install && bin/rails assets:precompile && bin/rails db:migrate && bin/rai
 
 ## Zaman
 
-İnsan zamanı: [CEYDA YAZACAK]
+İnsan zamanı: **yaklaşık 3,5 saat (tahmini, molalar hariç).** Duvar saati olarak 16:20 ile son commit arası yaklaşık 7 saat geçti, ama bunun büyük kısmı ajanın çalışmasını ve molaları bekleyerek geçti. Tahmin, `ILERLEME.md`'deki adım başına "Ceyda'nın süresi" satırlarının toplamına (≈ 184 dk) Adım 8'in yaklaşık 25 dakikasını ekleyerek yapıldı. İçeriği: görev tanımı, promptların verilmesi, planların onaylanması, terminalde gerçek Groq denemeleri, arayüz ve Render kontrolleri. Ölçülmüş bir değil, hatırlamaya dayalı bir tahmindir.
+
+Bu log ve kod, Ceyda'nın yönlendirmesi ve onayıyla Claude Code tarafından yazıldı.
 
 Agent zamanı: **≈ 4 saat 28 dakika** (268 dk; duvar saati). Hesap: `ILERLEME.md`'deki ilk kayıt (Adım 0, 24 Ekim 2026 16:27:39) ile son kayıt (Adım 7, 20:55:38) arasındaki fark. Bu süre Ceyda'nın onay beklemelerini, gerçek Groq denemelerini ve yerel arayüz kontrolünü de içerir; saf agent çalışma süresi bundan kısadır.
 
@@ -175,6 +177,8 @@ Bu hafta PastelBoard'a "ajan panosu" ekleyeceğiz: işçi ajanlar havuzdan iş a
 6. Testleri çalıştır (mevcut 34 test geçmeli) ve commit at.
 ````
 
-## Karar
+## Pivot
 
-[CEYDA YAZACAK]
+**Aynı motor, yeni kullanıcı.** Geçen haftaki zaman kuralıyla eskalasyon fikri korunuyor: süresi geçen ya da düzelmeyen iş görünür biçimde bir insana düşüyor. Değişen kullanıcı: artık ajan ekipleri ve onları denetleyen insanlar. Pazar var: Jira'da ajanlar atanabilir ekip üyesi ([Atlassian](https://www.atlassian.com/blog/ai-at-work/your-jira-board-just-got-a-new-kind-of-teammate)), Linear'da işler ajanlara devredilebiliyor ([Linear](https://linear.app/docs/assigning-issues)). Boşluk ise denetim katmanında: ajanlar görevden sapıyor ve doğrulama hataları yapıyor ([MAST](https://arxiv.org/abs/2503.13657)). Kendi gerçek denememizde de işçi eksik bilgiyi uydurdu ve mentor onayladı; bunu "BİLGİ EKSİK" akışı ve kodda tutulan politikayla (`met=false` ya da rehber ihlali varsa pass revise olur) düzelttik.
+
+Maliyet basamağı da bu yüzden böyle kurulu: küçük model çalışır, büyük model gerektiğinde denetler, insan yalnızca en sonda devreye girer. **Risk:** büyük oyuncular bu alana girdi; ürün genel amaçlı bir pano olarak değil, niş bir denetim katmanı olarak konumlanmalı. **Sonraki adım:** ajanlar için dış API/MCP ve gerçek bir ekiple deneme.
