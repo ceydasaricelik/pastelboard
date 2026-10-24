@@ -111,3 +111,11 @@ Ajan panosu çalışmasının adım adım kayıt defteri. Her adımın sonunda b
 - Commit mesajı: Adım 7: CHALLENGE_LOG son hali — gerçek deneme kanıtları, CI notu, deploy kuralları ve fark katmanı
 - Açık kalanlar / notlar: Adım 6'daki prompt değişiklikleri gerçek Groq'ta henüz denenmedi. Termos kartının insana devredilmesi (işçi dersi iki denemede uygulayamadı) CHALLENGE_LOG'da dürüstçe yazıldı. Render start komutu repoda yok, yalnızca build komutu Ceyda'dan alındı.
 - Ceyda'nın süresi:
+## Adım 7b — Commit linki
+- Tarih/saat: 2026-10-24 21:09:26 +03:00
+- Ne yapıldı: CHALLENGE_LOG adım tablosunda Adım 7 satırındaki "(bu commit)" yerine gerçek commit linki (0eb98a7) yazıldı.
+- Eklenen/değişen dosyalar: CHALLENGE_LOG.md, ILERLEME.md
+- Testler: 139 test, 672 doğrulama, 0 hata (yalnızca belge değişti; RuboCop ve Brakeman temiz)
+- Commit mesajı: Adım 7b: CHALLENGE_LOG tablosuna Adım 7 commit linki
+- Açık kalanlar / notlar: Yok.
+- Ceyda'nın süresi:

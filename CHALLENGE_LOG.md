@@ -40,7 +40,7 @@ Güncel durum: **139 test, 672 doğrulama, 0 hata**; RuboCop, Brakeman, bundler-
 | 4 — Belgeler | Bu dosya ve README'deki "Ajan panosu" bölümü. | [6d09809](https://github.com/ceydasaricelik/pastelboard/commit/6d09809) | 134 |
 | 5 — CI düzeltmesi | GitHub CI'daki bundler-audit adımı `crass` 1.0.7 için GHSA-pq4g-8rxf-4g29 ilanını yakaladı; `crass` 1.0.8'e güncellendi, CI'ın tüm adımları yerelde temiz çalıştı. | [16e6332](https://github.com/ceydasaricelik/pastelboard/commit/16e6332) | 134 |
 | 6 — Prompt ve arayüz | İşçi promptuna "mentor kuralları kesindir, BİLGİ EKSİK yalnızca eksik içerik için" eklendi; mentor alanları Türkçe; kart detayında "Mentor geri bildirimi", "Ajanın sorusu" ve "İnsan ipucu" ayrı başlıklarda; `db:seed` tekrarının kopya üretmediği testle doğrulandı; README'ye Windows komutları. | [30af5cd](https://github.com/ceydasaricelik/pastelboard/commit/30af5cd) | 139 |
-| 7 — Son hali | Bu dosya: gerçek deneme kanıtları, CI notu, deploy ve fark katmanı bölümleri. | (bu commit) | 139 |
+| 7 — Son hali | Bu dosya: gerçek deneme kanıtları, CI notu, deploy ve fark katmanı bölümleri. [0eb98a7](https://github.com/ceydasaricelik/pastelboard/commit/0eb98a7) | 139 |
 
 ### CI teslimden önce yeni bir güvenlik ilanı yakaladı
 
