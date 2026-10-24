@@ -47,6 +47,7 @@ Bu bölüm, başlangıç planından sapılan yerleri ve nedenlerini kaydeder.
 - Gizli dosyalar (`config/master.key`, `.env`) commit edilmez; anahtarlar Render ortam değişkeni olarak verilir.
 
 # Ajan panosu çalışma kuralları
+- Bu makine Windows: bin/ komutlarını `ruby bin/rails ...`, `ruby bin/rubocop`, `ruby bin/brakeman --no-pager` şeklinde çalıştır.
 - Yeni bir oturuma başlarken önce `ILERLEME.md`'nin son kaydını oku.
 - Kod yazmadan önce kısa bir plan çıkar ve onayımı bekle.
 - Testlerden önce PostgreSQL kapalıysa `PROJE_DURUMU.md` bölüm 8'deki komutla aç.

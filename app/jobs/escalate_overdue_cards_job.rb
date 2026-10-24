@@ -3,7 +3,7 @@ class EscalateOverdueCardsJob < ApplicationJob
 
   # Returns how many cards were escalated. `at` lets a demo look at the board as of a later moment.
   def perform(board_id: nil, at: Time.current)
-    boards = board_id ? Board.where(id: board_id) : Board.all
+    boards = (board_id ? Board.where(id: board_id) : Board.all).human
     boards.find_each.sum { |board| escalate_overdue_cards(board, at) }
   end
 

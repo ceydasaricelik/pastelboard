@@ -1,7 +1,19 @@
 class List < ApplicationRecord
   DONE_NAME = "Done"
   OVERDUE_NAME = "Gecikenler"
-  COLORS = %w[ sky rose teal lime indigo fuchsia cyan pink ].freeze
+  POOL_NAME = "Havuz"
+  REVIEW_NAME = "Mentor incelemesinde"
+  REWORK_NAME = "Düzeltmede"
+  HUMAN_NAME = "İnsana devredildi"
+  # The fixed lists of an agent board, by the Card#agent_state that places a card in each.
+  AGENT_STATE_LISTS = {
+    "open" => POOL_NAME,
+    "in_review" => REVIEW_NAME,
+    "rework" => REWORK_NAME,
+    "needs_human" => HUMAN_NAME,
+    "done" => DONE_NAME
+  }.freeze
+  COLORS =%w[ sky rose teal lime indigo fuchsia cyan pink ].freeze
 
   belongs_to :board
   has_many :cards, -> { order(position: :asc) }, dependent: :destroy

@@ -10,15 +10,28 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_19_000000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_24_170000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "agent_events", force: :cascade do |t|
+    t.bigint "card_id", null: false
+    t.bigint "actor_id"
+    t.string "kind", null: false
+    t.text "message"
+    t.jsonb "data", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["actor_id"], name: "index_agent_events_on_actor_id"
+    t.index ["card_id"], name: "index_agent_events_on_card_id"
+  end
 
   create_table "boards", force: :cascade do |t|
     t.string "name"
     t.text "description"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "kind", default: 0, null: false
   end
 
   create_table "card_labels", force: :cascade do |t|
@@ -50,6 +63,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_19_000000) do
     t.bigint "list_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "agent_state"
+    t.bigint "assignee_id"
+    t.integer "attempts", default: 0, null: false
+    t.text "output"
+    t.text "feedback"
+    t.index ["assignee_id"], name: "index_cards_on_assignee_id"
     t.index ["list_id"], name: "index_cards_on_list_id"
   end
 
@@ -88,6 +107,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_19_000000) do
     t.string "color", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "kind", default: 0, null: false
+    t.integer "role"
+    t.string "model"
+    t.text "lessons"
     t.index ["board_id"], name: "index_members_on_board_id"
   end
 
@@ -241,11 +264,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_19_000000) do
     t.index ["key"], name: "index_solid_queue_semaphores_on_key", unique: true
   end
 
+  add_foreign_key "agent_events", "cards"
+  add_foreign_key "agent_events", "members", column: "actor_id", on_delete: :nullify
   add_foreign_key "card_labels", "cards"
   add_foreign_key "card_labels", "labels"
   add_foreign_key "card_members", "cards"
   add_foreign_key "card_members", "members"
   add_foreign_key "cards", "lists"
+  add_foreign_key "cards", "members", column: "assignee_id", on_delete: :nullify
   add_foreign_key "checklist_items", "cards"
   add_foreign_key "labels", "boards"
   add_foreign_key "lists", "boards"
