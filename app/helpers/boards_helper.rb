@@ -3,7 +3,12 @@ module BoardsHelper
     "To Do" => "bg-violet-100/70 ring-violet-200",
     "Doing" => "bg-amber-100/70 ring-amber-200",
     List::DONE_NAME => "bg-emerald-100/70 ring-emerald-200",
-    List::OVERDUE_NAME => "bg-linear-to-b from-rose-100 to-orange-100 ring-2 ring-rose-400 animate-sla-pulse"
+    List::OVERDUE_NAME => "bg-linear-to-b from-rose-100 to-orange-100 ring-2 ring-rose-400 animate-sla-pulse",
+    # Agent boards: the hand-over list looks like Gecikenler.
+    List::POOL_NAME => "bg-sky-100/70 ring-sky-200",
+    List::REVIEW_NAME => "bg-violet-100/70 ring-violet-200",
+    List::REWORK_NAME => "bg-amber-100/70 ring-amber-200",
+    List::HUMAN_NAME => "bg-linear-to-b from-rose-100 to-orange-100 ring-2 ring-rose-400 animate-sla-pulse"
   }.freeze
 
   LIST_COLOR_TONES = {

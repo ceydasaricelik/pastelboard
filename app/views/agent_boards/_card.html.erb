@@ -1,0 +1,37 @@
+<% checklist_done = card.checklist_items.count(&:done) %>
+<% needs_human = card.agent_needs_human? %>
+<article id="<%= dom_id card %>"
+         class="relative bg-white rounded-xl border shadow-sm p-3.5 transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 <%= needs_human ? "border-rose-200 border-l-4 border-l-rose-500" : "border-gray-100" %> <%= "ring-2 ring-violet-300" if card == @card %>">
+  <%= link_to card.title, card_path(card), class: "absolute inset-0 rounded-xl text-transparent", "aria-label": "#{card.title} kartını aç" %>
+
+  <div class="flex items-start justify-between gap-2">
+    <h3 class="font-semibold text-sm leading-snug <%= card.agent_done? ? "text-slate-400 line-through" : "text-slate-800" %>"><%= card.title %></h3>
+    <%= agent_state_badge(card) %>
+  </div>
+
+  <div class="mt-3 flex items-center justify-between gap-2">
+    <div class="flex flex-wrap items-center gap-1.5">
+      <% if card.attempts > 0 %>
+        <span class="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500" title="Deneme sayısı">
+          <%= card.attempts %>/<%= AgentBoards::Tick::MAX_ATTEMPTS %>
+        </span>
+      <% end %>
+      <% if card.checklist_items.any? %>
+        <% all_done = checklist_done == card.checklist_items.size %>
+        <span class="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-xs font-medium <%= all_done ? "bg-emerald-100 text-emerald-700" : "text-slate-500" %>">
+          <svg class="size-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+            <path fill-rule="evenodd" d="M16.7 4.15a.75.75 0 0 1 .15 1.05l-8 10.5a.75.75 0 0 1-1.13.08l-4.5-4.5a.75.75 0 1 1 1.06-1.06l3.9 3.9 7.47-9.8a.75.75 0 0 1 1.05-.15Z" clip-rule="evenodd" />
+          </svg>
+          <%= checklist_done %>/<%= card.checklist_items.size %>
+        </span>
+      <% end %>
+    </div>
+
+    <% if card.assignee %>
+      <span class="flex items-center gap-1.5 text-xs font-medium text-slate-500" title="<%= card.assignee.name %> · <%= card.assignee.model %>">
+        <%= member_avatar(card.assignee, size: "size-6") %>
+        <%= agent_role_label(card.assignee) %>
+      </span>
+    <% end %>
+  </div>
+</article>

@@ -7,5 +7,9 @@ module AgentBoards
       key = env["GROQ_API_KEY"].presence
       key ? GroqLlm.new(api_key: key) : FakeLlm.new
     end
+
+    def simulated?(env: ENV)
+      env["GROQ_API_KEY"].blank?
+    end
   end
 end

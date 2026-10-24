@@ -7,6 +7,7 @@ class BoardsController < ApplicationController
 
   def show
     @lists = @board.lists.includes(cards: [ :labels, :members, :checklist_items ])
+    render "boards/agent_show" if @board.agent?
   end
 
   def new

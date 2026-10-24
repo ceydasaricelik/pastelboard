@@ -1,13 +1,13 @@
 module AgentBoards
   # One round of work on an agent board: every card that needs attention advances by a single step.
-  # Reviews go first, then reworks, then new cards from the pool; at most MAX_CARDS cards per round
+  # Reviews go first, then reworks, then new cards from the pool; at most max_cards cards per round
   # and at most one card per worker.
   #
   # Each card moves under a row lock (the LLM call included) and its state is checked again once the
   # lock is held, so two rounds running at once never work the same card twice. When the model fails,
   # the card's changes are rolled back, an "llm_error" event is written and the round goes on.
   class Tick
-    MAX_CARDS = 3
+    DEFAULT_MAX_CARDS = 3
     MAX_ATTEMPTS = 2
     STATES = %w[ in_review rework open ].freeze
     VERDICTS = %w[ pass revise escalate ].freeze
@@ -18,6 +18,12 @@ module AgentBoards
     def self.claim(card, worker)
       Card.where(id: card.id, agent_state: :open, assignee_id: nil)
         .update_all(assignee_id: worker.id, updated_at: Time.current) == 1
+    end
+
+    # Cards per round; AGENT_ROUND_LIMIT lowers it when a round with the real model takes too long.
+    def self.max_cards(env: ENV)
+      limit = env["AGENT_ROUND_LIMIT"].to_i
+      limit.positive? ? limit.clamp(1, 10) : DEFAULT_MAX_CARDS
     end
 
     def initialize(board, llm:)
@@ -40,14 +46,15 @@ module AgentBoards
       end
     end
 
-    # `cards` is the snapshot to work through. A failed model call counts toward MAX_CARDS but not
+    # `cards` is the snapshot to work through. A failed model call counts toward max_cards but not
     # as progress; a card someone else already moved counts for neither.
     def call(cards = candidates)
       busy = Set.new
       summary = Summary.new(0, 0)
+      limit = self.class.max_cards
 
       cards.each do |card|
-        break if summary.advanced + summary.errors >= MAX_CARDS
+        break if summary.advanced + summary.errors >= limit
 
         case step(card, busy)
         when :advanced then summary.advanced += 1

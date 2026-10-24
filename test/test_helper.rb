@@ -2,6 +2,9 @@ ENV["RAILS_ENV"] ||= "test"
 require_relative "../config/environment"
 require "rails/test_help"
 
+# Tests never reach the network: whatever key the developer has set, the suite runs on the fake model.
+ENV.delete("GROQ_API_KEY")
+
 module ActiveSupport
   class TestCase
     # Run tests in parallel with specified workers

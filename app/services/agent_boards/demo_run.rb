@@ -19,8 +19,10 @@ module AgentBoards
 
     def call
       @out.puts @llm.simulated? ? "Mod: simülasyon (GROQ_API_KEY yok)" : "Mod: Groq (gerçek LLM)"
+      started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
       summary = Tick.new(@board, llm: @llm).call
-      @out.puts "Tur bitti: #{summary}."
+      elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
+      @out.puts "Tur bitti: #{summary}. Süre: #{elapsed.round(1)} sn (kart sınırı: #{Tick.max_cards})."
       report
       summary
     end

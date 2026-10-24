@@ -5,7 +5,7 @@ class CardsController < ApplicationController
   def show
     @board = @card.board
     @lists = @board.lists.includes(cards: [ :labels, :members, :checklist_items ])
-    render "boards/show"
+    render(@board.agent? ? "boards/agent_show" : "boards/show")
   end
 
   # POST /boards/1/lists/1/cards

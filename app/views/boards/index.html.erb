@@ -11,7 +11,14 @@
       <p class="text-sm font-medium text-teal-600 mb-1">PastelBoard</p>
       <h1 class="font-bold text-4xl text-slate-800">Panolar</h1>
     </div>
-    <%= link_to "Yeni pano", new_board_path, class: "rounded-xl px-4 py-2.5 bg-teal-500 hover:bg-teal-400 text-white font-medium shadow-sm" %>
+    <div class="flex items-center gap-3">
+      <% if demo_time_travel? %>
+        <%= button_to "Demo ajan panosu oluştur/sıfırla", agent_demo_path,
+              form: { data: { turbo_confirm: "Varsa eski demo ajan panosu silinip yeniden kurulsun mu?" } },
+              class: "cursor-pointer rounded-xl px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-600 font-medium shadow-sm ring-1 ring-slate-200" %>
+      <% end %>
+      <%= link_to "Yeni pano", new_board_path, class: "rounded-xl px-4 py-2.5 bg-teal-500 hover:bg-teal-400 text-white font-medium shadow-sm" %>
+    </div>
   </div>
 
   <div id="boards" class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -24,7 +31,12 @@
           "bg-amber-50 border-amber-100 hover:border-amber-200"
         ] %>
         <%= link_to board, class: "block rounded-2xl border #{tones[index % tones.length]} p-6 shadow-sm transition hover:shadow-md" do %>
-          <h2 class="text-xl font-semibold text-slate-800 mb-2"><%= board.name %></h2>
+          <h2 class="text-xl font-semibold text-slate-800 mb-2">
+            <%= board.name %>
+            <% if board.agent? %>
+              <span class="ml-1 align-middle rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-violet-600">Ajan panosu</span>
+            <% end %>
+          </h2>
           <p class="text-slate-500 text-sm leading-relaxed"><%= board.description.presence || "Açıklama yok" %></p>
           <p class="mt-4 text-xs font-medium text-slate-400"><%= board.lists.count %> liste</p>
         <% end %>
