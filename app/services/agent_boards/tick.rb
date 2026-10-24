@@ -131,7 +131,7 @@ module AgentBoards
 
       def apply_review(card, mentor, result)
         worker = card.assignee
-        data = { verdict: result[:verdict], criteria: result[:criteria], lesson: result[:lesson],
+        data = { verdict: result[:verdict], criteria: result[:criteria], lesson: result[:lesson], feedback: result[:feedback],
                  guideline_violations: result[:guideline_violations] }
         data[:overridden_from] = result[:overridden_from] if result[:overridden_from]
 

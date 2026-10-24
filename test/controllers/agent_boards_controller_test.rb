@@ -177,6 +177,40 @@ class AgentBoardsControllerTest < ActionDispatch::IntegrationTest
     assert_select "section h2", text: /İnsan lazım|İnsana devredildi/
   end
 
+  test "the agent's question and the human hint have their own headings, not the mentor's" do
+    card = create_agent_card(@board, title: AgentBoards::DemoSeeder::MISSING_INFO_TITLE)
+    run_rounds(1)
+
+    get card_url(card)
+
+    assert_select "#agent_question", text: /Ajanın sorusu.*Ürünün adı ve özellikleri nedir/m
+    assert_select "#mentor_feedback", count: 0
+    assert_select "#human_hint", count: 0
+
+    post card_hint_url(card), params: { hint: "Ürün adı Nova X1." }
+    get card_url(card)
+
+    assert_select "#human_hint", text: /İnsan ipucu.*Ürün adı Nova X1/m
+    assert_select "#mentor_feedback", count: 0
+    assert_select "#agent_question", count: 0
+  end
+
+  test "mentor feedback shows only what the mentor said, apart from an earlier hint" do
+    card = create_agent_card(@board, title: AgentBoards::DemoSeeder::MISSING_INFO_TITLE)
+    run_rounds(1)
+    post card_hint_url(card), params: { hint: "Ürün adı Nova X1." }
+    review = { verdict: "revise", feedback: "Daha kısa yaz.",
+               criteria: card.checklist_items.map { |item| { item_id: item.id, met: false, reason: "uzun" } } }
+    AgentBoards::Tick.new(@board, llm: FakeLlm.new(writes: [ "Nova X1 kulaklık." ])).call
+    AgentBoards::Tick.new(@board, llm: FakeLlm.new(reviews: [ review ])).call
+
+    get card_url(card)
+
+    assert_select "#mentor_feedback", text: /Mentor geri bildirimi.*Daha kısa yaz/m
+    assert_select "#mentor_feedback", text: /İnsan ipucu/, count: 0
+    assert_select "#human_hint", count: 0
+  end
+
   test "giving a hint sends the card back to its worker" do
     card = create_agent_card(@board, title: AgentBoards::DemoSeeder::MISSING_INFO_TITLE)
     run_rounds(1)

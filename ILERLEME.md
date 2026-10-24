@@ -95,3 +95,11 @@ Ajan panosu çalışmasının adım adım kayıt defteri. Her adımın sonunda b
 - Commit mesajı: Adım 5: crass 1.0.8'e güncellendi (GHSA-pq4g-8rxf-4g29), CI yeşile döndürülüyor
 - Açık kalanlar / notlar: gh CLI bu makinede yok; push sonrası CI sonucu GitHub'daki Actions sayfasından Ceyda tarafından görülmeli.
 - Ceyda'nın süresi:
+## Adım 6 — Prompt ve arayüz düzeltmeleri
+- Tarih/saat: 2026-10-24 20:55:06 +03:00
+- Ne yapıldı: İşçi promptuna "Mentor geri bildirimindeki ve ders defterindeki kurallar kesindir. Bunları soru konusu yapma, uygula. BİLGİ EKSİK yalnızca kartta olmayan içerik bilgisi (ürün adı, özellik vb.) için kullanılır." eklendi; mentor promptuna reason, feedback, lesson ve guideline_violations alanlarının Türkçe yazılması talimatı eklendi. Kart detayında "Mentor geri bildirimi" artık yalnızca mentorun son incelemesindeki `feedback`i gösteriyor (mentorun `feedback`i inceleme olayının `data`sına da yazılıyor); ajanın sorusu "Ajanın sorusu" ve insan ipucu "İnsan ipucu" başlıklarıyla ayrı gösteriliyor (`card.feedback` artık doğrudan görünmüyor; soru ve ipucu olay kayıtlarından okunuyor). db:seed her deploy'da çalışıyor: `db/seeds.rb` yalnızca insan panosunu `find_or_create_by` ile kuruyor, ajan panosuna dokunmuyor; iki kez çalıştırınca kayıt sayısı değişmedi, kopya yok (düzeltme gerekmedi, test eklendi). README'nin yerel kurulum bölümüne Windows komutları eklendi (`ruby bin/rails tailwindcss:build`, `ruby bin/rails server`).
+- Eklenen/değişen dosyalar: app/services/agent_boards/{prompts,tick}.rb, app/helpers/agent_boards_helper.rb, app/views/agent_boards/_detail.html.erb, README.md, test/services/agent_boards/prompts_test.rb, test/integration/seeds_test.rb, test/controllers/agent_boards_controller_test.rb
+- Testler: 139 test, 672 doğrulama, 0 hata (RuboCop ve Brakeman temiz)
+- Commit mesajı: Adım 6: İşçi ve mentor prompt düzeltmeleri, kart detayında soru/ipucu/mentor ayrımı, Windows çalıştırma komutları
+- Açık kalanlar / notlar: Karar: eski olaylarda (bu adımdan önce yazılanlar) mentor `feedback`i olay verisinde yok; bu kartlarda "Mentor geri bildirimi" kutusu görünmez, yeni turlarda görünür. Prompt değişiklikleri gerçek Groq'ta denenmedi.
+- Ceyda'nın süresi:

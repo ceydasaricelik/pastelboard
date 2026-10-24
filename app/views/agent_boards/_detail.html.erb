@@ -1,7 +1,9 @@
 <% review = latest_review_event(card) %>
 <% criteria = review_criteria(card) %>
 <% violations = Array(review&.data&.dig("guideline_violations")) %>
-<% question = card.agent_events.select { |event| event.kind == "question" }.last if card.agent_needs_human? %>
+<% question = agent_question(card) %>
+<% hint = human_hint(card) %>
+<% feedback = mentor_feedback(card) %>
 <div id="card_detail" class="fixed inset-0 z-40 flex items-start justify-center overflow-y-auto p-4 sm:p-10">
   <%= link_to "", board_path(board), class: "fixed inset-0 bg-slate-900/30 backdrop-blur-[1px]", "aria-label": "Kartı kapat" %>
 
@@ -37,8 +39,11 @@
           <p class="text-sm font-semibold text-rose-700">
             <%= question ? "Ajan insana soru sordu" : "Bu kart insana devredildi" %>
           </p>
-          <% if card.feedback.present? %>
-            <p class="whitespace-pre-line text-sm text-rose-800"><%= card.feedback %></p>
+          <% if question %>
+            <div id="agent_question">
+              <p class="text-xs font-semibold uppercase tracking-wide text-rose-400">Ajanın sorusu</p>
+              <p class="whitespace-pre-line text-sm text-rose-800"><%= question %></p>
+            </div>
           <% end %>
           <%= form_with url: card_hint_path(card), class: "space-y-2" do |form| %>
             <%= form.text_area :hint, rows: 3, required: true, placeholder: "İpucu yaz (ör. ürün adı, özellikler, fiyat)…",
@@ -92,10 +97,17 @@
         </div>
       <% end %>
 
-      <% if card.feedback.present? && !card.agent_needs_human? %>
+      <% if feedback %>
         <div id="mentor_feedback">
           <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">Mentor geri bildirimi</p>
-          <p class="whitespace-pre-line rounded-xl bg-violet-50 p-3 text-sm text-violet-900 ring-1 ring-violet-100"><%= card.feedback %></p>
+          <p class="whitespace-pre-line rounded-xl bg-violet-50 p-3 text-sm text-violet-900 ring-1 ring-violet-100"><%= feedback %></p>
+        </div>
+      <% end %>
+
+      <% if hint %>
+        <div id="human_hint">
+          <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">İnsan ipucu</p>
+          <p class="whitespace-pre-line rounded-xl bg-amber-50 p-3 text-sm text-amber-900 ring-1 ring-amber-100"><%= hint %></p>
         </div>
       <% end %>
 

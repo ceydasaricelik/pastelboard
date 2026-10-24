@@ -158,6 +158,17 @@ bin/rails db:prepare     # veritabanı + migration + seed
 bin/dev                  # http://localhost:3000
 ```
 
+Windows'ta `bin/dev` çalışmaz (Foreman Procfile'ı Unix soketleriyle çalıştırır). Windows PowerShell için:
+
+```powershell
+bundle install
+ruby bin/rails db:prepare
+ruby bin/rails tailwindcss:build
+ruby bin/rails server    # http://localhost:3000
+```
+
+Ajan panosunu gerçek Groq modelleriyle denemek için sunucuyu başlatmadan önce aynı terminalde `$env:GROQ_API_KEY = "..."` ayarla; anahtar yoksa pano simülasyon modunda çalışır.
+
 Eskalasyon kuralını elle çalıştırmak için:
 
 ```bash

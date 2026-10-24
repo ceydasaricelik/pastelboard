@@ -67,11 +67,41 @@ module AgentBoardsHelper
     (latest_review_event(card)&.data&.dig("criteria") || []).index_by { |criterion| criterion["item_id"] }
   end
 
+  # What the mentor said in the latest review; nil before any review, so a question or a hint is never shown as mentor feedback.
+  def mentor_feedback(card)
+    latest_review_event(card)&.data&.dig("feedback").presence
+  end
+
+  # The worker's open question, while the card waits for a person who has not answered it.
+  def agent_question(card)
+    return unless card.agent_needs_human?
+
+    question = latest_event(card, "question")
+    question.data["question"].presence if question && newer_than_review?(card, question)
+  end
+
+  # The person's latest hint, until the mentor has reviewed the rework it asked for.
+  def human_hint(card)
+    hint = latest_event(card, "hint_given")
+    hint.data["hint"].presence if hint && newer_than_review?(card, hint)
+  end
+
   def lesson_lines(member)
     member.lessons.to_s.lines.map { |line| line.strip.delete_prefix("- ") }.reject(&:blank?)
   end
 
   def guideline_lines(board)
     board.guidelines.to_s.lines.map { |line| line.strip.delete_prefix("- ") }.reject(&:blank?)
+  end
+
+  private
+
+  def latest_event(card, kind)
+    card.agent_events.select { |event| event.kind == kind }.last
+  end
+
+  def newer_than_review?(card, event)
+    review = latest_review_event(card)
+    review.nil? || review.id < event.id
   end
 end

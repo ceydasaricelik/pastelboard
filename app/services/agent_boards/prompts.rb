@@ -10,6 +10,8 @@ module AgentBoards
       sections << "Önceki geri bildirim:\n#{card.feedback}" if card.feedback.present?
       sections << "Ders defterin:\n#{worker.lessons}" if worker.lessons.present?
       sections << "Ekip kuralları sana ayrıca bildirilmez; mentor gerekirse düzeltme ister. Bunları BİLGİ EKSİK sayma."
+      sections << "Mentor geri bildirimindeki ve ders defterindeki kurallar kesindir. Bunları soru konusu yapma, uygula. " \
+                  "BİLGİ EKSİK yalnızca kartta olmayan içerik bilgisi (ürün adı, özellik vb.) için kullanılır."
       sections << "Görev için gereken bilgi kartta yoksa uydurma. Çıktıyı yalnızca \"BİLGİ EKSİK: \" ile başlat " \
                   "ve insana sorulacak soruyu yaz. Bilgi yeterliyse yalnızca teslim edilecek metni yaz."
       sections.join("\n\n")
@@ -28,7 +30,8 @@ module AgentBoards
                   "Görev karttaki bilgiyle yapılamıyorsa: escalate."
       sections << "Her kriter için { item_id, met, reason } ver; verdict pass, revise veya escalate olsun. " \
                   "Düzeltilebilir hatalarda feedback ve işçinin ders defterine girecek kısa bir lesson yaz. " \
-                  "Rehbere aykırı her kuralı guideline_violations listesine yaz (aykırılık yoksa boş liste)."
+                  "Rehbere aykırı her kuralı guideline_violations listesine yaz (aykırılık yoksa boş liste). " \
+                  "Tüm alanları (reason, feedback, lesson, guideline_violations) Türkçe yaz."
       sections.join("\n\n")
     end
 
