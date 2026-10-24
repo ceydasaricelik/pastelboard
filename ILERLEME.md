@@ -103,3 +103,11 @@ Ajan panosu çalışmasının adım adım kayıt defteri. Her adımın sonunda b
 - Commit mesajı: Adım 6: İşçi ve mentor prompt düzeltmeleri, kart detayında soru/ipucu/mentor ayrımı, Windows çalıştırma komutları
 - Açık kalanlar / notlar: Karar: eski olaylarda (bu adımdan önce yazılanlar) mentor `feedback`i olay verisinde yok; bu kartlarda "Mentor geri bildirimi" kutusu görünmez, yeni turlarda görünür. Prompt değişiklikleri gerçek Groq'ta denenmedi.
 - Ceyda'nın süresi:
+## Adım 7 — CHALLENGE_LOG son hali
+- Tarih/saat: 2026-10-24 20:55:38 +03:00
+- Ne yapıldı: CHALLENGE_LOG.md ödev isterlerine göre son haline getirildi. "Rehberli gerçek deneme yapılmadı" ve "tur süresi ölçülmedi" gibi geçersiz notlar kaldırıldı; Ceyda'nın yerelde yaptığı gerçek Groq denemesinin sonuçları kanıt olarak eklendi (kulaklık kartı mentor düzeltmesinden sonra Done, termos kartı tüm kriterler ✓ iken rehber ihlaliyle iki kez revise alıp insana devredildi, eksik bilgili kartta ajan soru sordu ve ipucundan sonra düzeltmeye döndü, tur süresi 1–7 sn). CI'ın teslim öncesi crass 1.0.7 ilanını (GHSA-pq4g-8rxf-4g29) yakalayıp düzeltildiği kısa bir notla yazıldı. Yeni alt bölümler: "Deploy ve coding agent kuralları" (Render build komutu, ortam değişkenleri, tek veritabanı + SOLID_QUEUE_IN_PUMA, CLAUDE.md → @AGENTS.md, ILERLEME.md) ve "Fark katmanı" (agent-first ve LLM zekâsı, slop testi cümlesi). Adım tablosuna 4, 5, 6 ve 7 satırları ve gerçek commit linkleri eklendi, test sayısı 139'a, demo senaryosu gerçek davranışa göre güncellendi. Zaman bölümü yeniden hesaplandı. Başlıklar ilk prompttaki listeyle birebir aynı; `[CEYDA YAZACAK]` yerlerine dokunulmadı.
+- Eklenen/değişen dosyalar: CHALLENGE_LOG.md, ILERLEME.md
+- Testler: 139 test, 672 doğrulama, 0 hata (RuboCop ve Brakeman temiz)
+- Commit mesajı: Adım 7: CHALLENGE_LOG son hali — gerçek deneme kanıtları, CI notu, deploy kuralları ve fark katmanı
+- Açık kalanlar / notlar: Adım 6'daki prompt değişiklikleri gerçek Groq'ta henüz denenmedi. Termos kartının insana devredilmesi (işçi dersi iki denemede uygulayamadı) CHALLENGE_LOG'da dürüstçe yazıldı. Render start komutu repoda yok, yalnızca build komutu Ceyda'dan alındı.
+- Ceyda'nın süresi:

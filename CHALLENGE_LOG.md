@@ -26,7 +26,7 @@ Geçen hafta insanlar için SLA eskalasyonlu bir Kanban panosu vardı. Bu hafta 
 
 ## Yapılanlar ve kanıt
 
-Güncel durum: **134 test, 651 doğrulama, 0 hata**; RuboCop ve Brakeman temiz. Her adımın ayrıntısı [ILERLEME.md](ILERLEME.md)'de. Testlerin hiçbiri ağa çıkmaz: LLM çağrıları `FakeLlm` ile, `Net::HTTP` ise stub ile taklit edilir.
+Güncel durum: **139 test, 672 doğrulama, 0 hata**; RuboCop, Brakeman, bundler-audit ve importmap audit temiz. Her adımın ayrıntısı [ILERLEME.md](ILERLEME.md)'de. Testlerin hiçbiri ağa çıkmaz: LLM çağrıları `FakeLlm` ile, `Net::HTTP` ise stub ile taklit edilir.
 
 | Adım | Ne yapıldı | Commit | Test |
 | --- | --- | --- | --- |
@@ -37,13 +37,28 @@ Güncel durum: **134 test, 651 doğrulama, 0 hata**; RuboCop ve Brakeman temiz. 
 | 2c — Uydurmaya karşı | İşçi için "BİLGİ EKSİK:" akışı, katı mentor promptu, mentor pass dese bile `met=false` kriter varsa revise kuralı, ağ hatasında tek yeniden deneme. | [07ccb67](https://github.com/ceydasaricelik/pastelboard/commit/07ccb67) | 103 |
 | 2d — Ekip rehberi | Panonun `guidelines` alanı yalnızca mentor promptunda; mentor `guideline_violations` döndürür, ihlal varsa pass revise'a çevrilir; ders işçinin ders defterine girer. | [7dcfdc7](https://github.com/ceydasaricelik/pastelboard/commit/7dcfdc7) | 112 |
 | 3 — Arayüz | Ajan panosu ekranı: tur butonu, canlı görev ekleme, kart detayı (çıktı, ✓/✗, rehber ihlali, zaman çizelgesi), ipucu ver / onayla, ajanlar ve ders defteri, demo panoyu kur/sıfırla. İnsan panosu değişmedi. | [7e1501d](https://github.com/ceydasaricelik/pastelboard/commit/7e1501d) | 134 |
-| 4 — Belgeler | Bu dosya ve README'deki "Ajan panosu" bölümü. | (bu commit) | 134 |
+| 4 — Belgeler | Bu dosya ve README'deki "Ajan panosu" bölümü. | [6d09809](https://github.com/ceydasaricelik/pastelboard/commit/6d09809) | 134 |
+| 5 — CI düzeltmesi | GitHub CI'daki bundler-audit adımı `crass` 1.0.7 için GHSA-pq4g-8rxf-4g29 ilanını yakaladı; `crass` 1.0.8'e güncellendi, CI'ın tüm adımları yerelde temiz çalıştı. | [16e6332](https://github.com/ceydasaricelik/pastelboard/commit/16e6332) | 134 |
+| 6 — Prompt ve arayüz | İşçi promptuna "mentor kuralları kesindir, BİLGİ EKSİK yalnızca eksik içerik için" eklendi; mentor alanları Türkçe; kart detayında "Mentor geri bildirimi", "Ajanın sorusu" ve "İnsan ipucu" ayrı başlıklarda; `db:seed` tekrarının kopya üretmediği testle doğrulandı; README'ye Windows komutları. | [30af5cd](https://github.com/ceydasaricelik/pastelboard/commit/30af5cd) | 139 |
+| 7 — Son hali | Bu dosya: gerçek deneme kanıtları, CI notu, deploy ve fark katmanı bölümleri. | (bu commit) | 139 |
+
+### CI teslimden önce yeni bir güvenlik ilanı yakaladı
+
+Teslimden önce GitHub Actions kırmızıya döndü: `bundler-audit` adımı `crass` 1.0.7'de [GHSA-pq4g-8rxf-4g29](https://github.com/advisories/GHSA-pq4g-8rxf-4g29) açığını buldu (çözüm: `>= 1.0.8`). `bundle update crass --conservative` ile yalnızca bu gem güncellendi (`Gemfile.lock`'ta iki satır), `ci.yml`'deki tüm adımlar (bundler-audit, importmap audit, RuboCop, Brakeman, testler) yerelde temiz çalıştı ve düzeltme push'landı (Adım 5). CI'ın görevi tam olarak buydu: kod değişmediği hâlde dışarıdan gelen yeni bir ilanı teslimden önce yakaladı.
 
 ### Gerçek denemelerden iki bulgu
 
 **a) İşçi eksik bilgiyi uydurdu, mentor onayladı.** İlk başarılı gerçek Groq denemesinde (ilk deneme model 404 verdi) bilgisi eksik karta ("Yeni ürün için açıklama metni") işçi ürün adını ve özelliklerini kendisi uydurdu ve mentor bunu onayladı. FakeLlm'le kurulan senaryoda bu hiç görünmemişti: simülasyon modu mentorun kör noktasını göstermez. Düzeltme üç katmanlı: işçi, bilgi kartta yoksa "BİLGİ EKSİK:" ile insana soru yazar ve kart doğrudan insana devredilir; mentor promptu kelime ve madde saymayı, kartta olmayan bilginin uydurma sayılmasını ister; kod tarafında mentor pass dese bile `met=false` kriter varsa sonuç revise'a çevrilir. "BİLGİ EKSİK" akışı bir sonraki gerçek denemede çalıştı (kart `needs_human` oldu, ajan insana soru sordu). `met=false` kuralı yalnızca testlerle doğrulandı; gerçek denemede bu kurala düşen bir durum görmedik.
 
-**b) Güçlü model her kartı ilk denemede geçirdi, mentorluk görünmüyordu.** `gpt-oss` modelleri üç kartı da ilk denemede pass aldı; düzeltme (rework) akışı hiç görünmedi, yani demoda "mentor geri bildirim ve ders verir" vaadi gösterilemiyordu. Çözüm modeli zayıflatmak değil, bilgi asimetrisi oldu: panonun ekip rehberini (müşteriye "sen" de, ünlem kullanma, her metin "PastelShop" ile bitsin) yalnızca mentor bilir, işçi görmez. İşçi kuralı bilemeyeceği için ilk teslimde ihlal eder, mentor `guideline_violations` ile geri gönderir ve kuralı tek cümlelik bir dersle işçinin ders defterine yazar; sonraki teslimde işçi bunu uygular. **Dürüst not:** Bu düzeltme FakeLlm testleriyle doğrulandı (rehber yalnızca mentor promptunda, ders sonraki işçi promptuna giriyor, ihlalli pass revise'a dönüyor). Gerçek Groq ile rehberli denemeyi bu yazı yazılırken henüz yapmadık; sonucu buraya eklenecek.
+**b) Güçlü model her kartı ilk denemede geçirdi, mentorluk görünmüyordu.** `gpt-oss` modelleri üç kartı da ilk denemede pass aldı; düzeltme (rework) akışı hiç görünmedi, yani demoda "mentor geri bildirim ve ders verir" vaadi gösterilemiyordu. Çözüm modeli zayıflatmak değil, bilgi asimetrisi oldu: panonun ekip rehberini (müşteriye "sen" de, ünlem kullanma, her metin "PastelShop" ile bitsin) yalnızca mentor bilir, işçi görmez. İşçi kuralı bilemeyeceği için ilk teslimde ihlal eder, mentor `guideline_violations` ile geri gönderir ve kuralı tek cümlelik bir dersle işçinin ders defterine yazar; sonraki teslimde işçi bunu uygular. Düzeltme önce FakeLlm testleriyle doğrulandı (rehber yalnızca mentor promptunda, ders sonraki işçi promptuna giriyor, ihlalli pass revise'a dönüyor), sonra gerçek Groq ile denendi.
+
+**Gerçek Groq denemesi (yerel, demo pano, `gpt-oss-20b` işçi / `gpt-oss-120b` mentor):**
+
+- **Kulaklık kartı:** mentor düzeltmesinden sonra Done'a geçti; yani düzeltme (rework) akışı gerçek modelle de görüldü.
+- **Termos kartı:** tüm kabul kriterleri ✓ olmasına rağmen ekip rehberi ihlali yüzünden iki kez revise aldı ve insana devredildi. Kriter listesi yeşil olduğu hâlde mentorun rehberi uygulaması, bilgi asimetrisinin gerçekten çalıştığını gösteriyor. **Dürüst not:** işçi dersi iki denemede uygulayamadı; kart Done olmadı, insana düştü. Bu yüzden Adım 6'da işçi promptuna "mentor geri bildirimindeki ve ders defterindeki kurallar kesindir, uygula" cümlesi eklendi. Bu değişiklik gerçek Groq'ta henüz denenmedi.
+- **Eksik bilgili kart:** ajan bilgiyi uydurmadı, insana soru sordu; ipucu verilince kart "Düzeltmede"ye döndü.
+- **Tur süresi:** 1–7 sn. Kart sınırı 3 olarak kaldı (`AGENT_ROUND_LIMIT` ile ayarlanır).
+- Arayüz kontrolü ve insan panosu / sürükle-bırak yerelde çalıştı. Render'da `6d09809` canlıydı (sonraki commit'lerin canlıya çıkışı ayrıca doğrulanmadı).
 
 Ayrıca gerçek denemelerde bir kez DNS hatası (`Socket::ResolutionError`) görüldü: kart yerinde kaldı, `llm_error` olayı yazıldı, sonraki turda düzeldi. Bu, tek otomatik yeniden deneme eklemesine yol açtı.
 
@@ -53,7 +68,7 @@ Canlı adres: https://pastelboard-web.onrender.com. Ücretsiz plan uyuyabilir; d
 
 1. **0:00 — Demo panoyu kur.** Panolar sayfasında "Demo ajan panosu oluştur/sıfırla"ya bas. Panoda üstteki mod etiketine ("Groq · openai/gpt-oss-20b / openai/gpt-oss-120b"), sağdaki "Ekip rehberi" kutusuna (işçiler görmez) ve boş ders defterlerine dikkat çek. Dört kart Havuz'da.
 2. **0:30 — İlk tur.** "▶ Bir tur çalıştır": buton "Ajanlar çalışıyor…" yazar. İki işçi birer kart alır; kartlar "Mentor incelemesinde"ye geçer. Tur özeti üstte çıkar.
-3. **1:00 — Düzeltme ve ders.** İkinci tur: mentor inceler. Rehbere aykırı bir kart "Düzeltmede"ye döner. Kartı aç: kriter bazında ✓/✗, kırmızı "Ekip rehberi ihlali" kutusu, mentor geri bildirimi. Sağdaki "Ajanlar"da ilgili işçinin ders defterine yeni bir ders düştü. Üçüncü tur: işçi dersle düzeltir, kart Done'a gider.
+3. **1:00 — Düzeltme ve ders.** İkinci tur: mentor inceler. Rehbere aykırı bir kart "Düzeltmede"ye döner. Kartı aç: kriter bazında ✓/✗, kırmızı "Ekip rehberi ihlali" kutusu, mentor geri bildirimi. Sağdaki "Ajanlar"da ilgili işçinin ders defterine yeni bir ders düştü. Üçüncü tur: işçi dersle düzeltir; kulaklık kartı Done'a gider. Termos kartı gerçek denemede dersi iki denemede uygulayamayıp "İnsana devredildi"ye düştü; bu da anlatının parçası: düzelmeyen kart insana gider.
 4. **1:45 — İnsana soru.** Bilgisi eksik kart ("Yeni ürün için açıklama metni") "İnsana devredildi" kolonunda kırmızı. Kartı aç: "Ajan insana soru sordu". İşçi bilgiyi uydurmadı.
 5. **2:15 — İpucu ver.** Metin kutusuna ürün bilgisini yaz (ör. "Aurora masa lambası, 12 saat pil, 399 TL"), "İpucu ver ve geri gönder"e bas. Kart "Düzeltmede"ye döner; bir tur daha çalıştır, işçi ipucuyla yazar.
 6. **2:40 — Canlı görev.** Havuz'da "+ Görev ekle": başlık, açıklama ve her satıra bir kabul kriteri yaz, ekle ve bir tur çalıştır. Ajanlar kartı alır.
@@ -63,19 +78,53 @@ Gerçek model beklenmedik davranırsa (ör. rehberi ilk seferde tutturursa) anla
 
 ### Vaat edip yapamadıklarım
 
-- **Gerçek Groq'ta tur süresi ölçülmedi.** Ajan ortamında anahtar yoktu; süre ölçümünü Ceyda yapacak (`ruby bin/rails runner "AgentBoards::DemoRun.call"` çıktısındaki "Süre"). 30 saniyeyi aşarsa `AGENT_ROUND_LIMIT=2` ayarlanacak. Tur istek içinde senkron çalışır; çok uzarsa Render'da zaman aşımı riski var.
-- **Rehberli gerçek deneme (bulgu b) henüz yapılmadı;** yalnızca FakeLlm testleriyle doğrulandı.
-- **Canlı (Render) ortamda ajan panosu henüz doğrulanmadı:** ortam değişkenlerinin ve yeni migration'ların canlıda çalıştığı Ceyda'nın kontrolünde.
-- **Arayüz tarayıcıda gözle incelenmedi;** HTML çıktısı controller testleriyle ve dev sunucusunda 200 yanıtıyla doğrulandı.
+- **Termos kartı Done olmadı.** Gerçek denemede işçi mentorun dersini iki denemede uygulayamadı ve kart insana devredildi. Adım 6'daki prompt düzeltmesi bunu hedefliyor ama gerçek modelle henüz denenmedi.
+- **Tur senkron çalışır:** tur istek içinde yürür; gerçek turlar 1–7 sn sürdü ama çok uzarsa Render'da zaman aşımı riski var.
+- **Canlıda son commit'ler doğrulanmadı:** Render'da `6d09809` canlıydı ve çalıştı; Adım 5–7'nin canlıya çıkışı ayrıca kontrol edilmedi. GitHub CI'ın bu commit'lerden sonraki yeşil sonucu Actions sayfasından görülmeli.
 - **Ajanlar kendiliğinden çalışmıyor:** işler yalnızca "Bir tur çalıştır" butonuyla (ya da `DemoRun` komutuyla) ilerler; zamanlanmış otomatik tur yok.
 - **Ekip rehberi için düzenleme arayüzü yok;** rehber şimdilik yalnızca demo seeder'ından geliyor.
 - **Mentor bazı kriterleri hiç listelemeden pass derse** `met=false` kuralı bunu yakalamaz.
+
+### Deploy ve coding agent kuralları
+
+**Render.** Canlı adres https://pastelboard-web.onrender.com. Build komutu:
+
+```
+bundle install && bin/rails assets:precompile && bin/rails db:migrate && bin/rails db:seed
+```
+
+`db:migrate` yeni ajan tablolarını ve kolonlarını (`boards.kind`, `members.kind/role/model/lessons`, `cards.agent_state` vb., `agent_events`, `boards.guidelines`) canlıya taşır. `db:seed` her deploy'da çalışır; seed yalnızca insan panosunu `find_or_create_by` ile kurduğu ve ajan panosuna dokunmadığı için tekrar çalışınca kopya pano, üye veya kart oluşmaz (Adım 6'da `test/integration/seeds_test.rb` ile doğrulandı). Start komutu repoda tutulmuyor, Render panelinde.
+
+**Ortam değişkenleri.**
+
+| Değişken | Ne için |
+| --- | --- |
+| `DATABASE_URL`, `RAILS_MASTER_KEY` | Render'ın tek PostgreSQL'i ve Rails sırları |
+| `SOLID_QUEUE_IN_PUMA=true` | Solid Queue arka plan görevleri web sunucusunun (Puma) içinde çalışır |
+| `GROQ_API_KEY` | Gizli. Yoksa ajan panosu "simülasyon modu"nda (`FakeLlm`) çalışır |
+| `DEMO_MODE=1` | Demo pano butonları ve "⏩ 2 gün ileri sar" görünür ve çalışır |
+| `GROQ_WORKER_MODEL`, `GROQ_MENTOR_MODEL` | İsteğe bağlı; varsayılan `openai/gpt-oss-20b` ve `openai/gpt-oss-120b` |
+| `AGENT_ROUND_LIMIT` | İsteğe bağlı; tur başına kart sınırı, varsayılan 3 (1–10) |
+
+**Tek veritabanı.** Rails 8 production'da dört veritabanı bekler (ana, cache, queue, cable); Render ücretsiz planı tek PostgreSQL veriyor. Bu yüzden Solid Queue tabloları migration ile ana veritabanına taşındı, önbellek bellek içinde, Action Cable `async`, Solid Queue Puma içinde (`SOLID_QUEUE_IN_PUMA`). Ajan panosu bu düzene ek servis getirmedi: `GroqLlm` yalnızca `Net::HTTP` kullanır, yeni gem yok.
+
+**Coding agent kuralları.** Claude Code oturum başında kökteki `CLAUDE.md`'yi okur; dosyanın tek satırı `@AGENTS.md`, yani asıl kurallar `AGENTS.md`'de tek yerde tutulur (başka bir agent de aynı dosyayı okur). `AGENTS.md`'nin sonundaki "Ajan panosu çalışma kuralları" şunları dayatır: oturuma `ILERLEME.md`'nin son kaydını okuyarak başla; Windows'ta `ruby bin/rails ...`; her adımın sonunda test, RuboCop ve Brakeman temiz olmadan adım bitmiş sayılmaz; testler ağa çıkmaz (LLM = `FakeLlm`); API anahtarı koda, commit'e veya log'a girmez, yalnızca `ENV["GROQ_API_KEY"]` okunur; insan panosunun davranışı bozulmaz; her adım tek commit ("Adım N: ..."), temizse push, force push yok. Agent özerk çalışır ama yalnızca veri silme, yeni gem/dış servis, insan panosu davranışı değişikliği ve 3 denemede çözülmeyen hata için durup sorar.
+
+**İlerleme kaydı.** Her adım sonunda `ILERLEME.md`'ye aynı şablonla kayıt düşülür (tarih/saat, ne yapıldı, dosyalar, test sayısı, commit mesajı, açık kalanlar, Ceyda'nın süresi). Yeni oturum bu dosyanın son kaydından devam eder; bu dosya aynı zamanda aşağıdaki agent zamanının kaynağıdır.
+
+### Fark katmanı
+
+**Agent-first.** Geçen haftaki panoda kartları insanlar sürüklüyordu. Bu hafta ajan panosunda sürükle-bırak yok: kartları ajanlar taşır. İşçi havuzdan atomik bir `UPDATE ... WHERE assignee_id IS NULL` ile iş alır, teslimi "Mentor incelemesinde"ye koyar, mentor kabul eder ya da "Düzeltmede"ye geri gönderir; insan yalnızca devredilen kartta ipucu verir veya onaylar. Kartın bütün geçmişi `AgentEvent` zaman çizelgesindedir.
+
+**LLM zekâsı, anahtar kelime değil.** Mentor `openai/gpt-oss-120b`'dir ve her kriter için `{ item_id, met, reason }` ile verdict (`pass`, `revise`, `escalate`), `feedback`, `lesson` ve `guideline_violations` döndürür. Çıktı Groq'un strict `json_schema`'sıyla tipli JSON'dur; geçersiz yanıt kartı değiştirmez, `llm_error` olarak kaydedilir. Karar mentorun, **politika kodun**: mentor pass dese bile `met=false` kriter ya da rehber ihlali varsa kod sonucu revise'a çevirir; iki denemede düzelmeyen ya da aynı çıktıyı tekrar eden kart insana devredilir; "BİLGİ EKSİK:" soruları doğrudan insana gider. Modelin ürettiği ders işçinin ders defterine yazılır ve sonraki işçi promptuna girer.
+
+**Slop testi.** Benimkinde kartları insanlar değil ajanlar taşıyor; raydan çıkan ajanı mentor ajan yakalayıp düzeltiyor, düzelmezse insana devrediyor ve mentorun dersi işçinin ders defterine yazılıyor.
 
 ## Zaman
 
 İnsan zamanı: [CEYDA YAZACAK]
 
-Agent zamanı: **≈ 3 saat 15 dakika** (195 dk; duvar saati). Hesap: `ILERLEME.md`'deki ilk kayıt (Adım 0, 24 Ekim 2026 16:27:39) ile son kayıt (Adım 4, 19:42:47) arasındaki fark. Bu süre Ceyda'nın onay beklemelerini ve gerçek Groq denemelerini de içerir; saf agent çalışma süresi bundan kısadır.
+Agent zamanı: **≈ 4 saat 28 dakika** (268 dk; duvar saati). Hesap: `ILERLEME.md`'deki ilk kayıt (Adım 0, 24 Ekim 2026 16:27:39) ile son kayıt (Adım 7, 20:55:38) arasındaki fark. Bu süre Ceyda'nın onay beklemelerini, gerçek Groq denemelerini ve yerel arayüz kontrolünü de içerir; saf agent çalışma süresi bundan kısadır.
 
 | Aralık | Dakika |
 | --- | --- |
@@ -86,6 +135,9 @@ Agent zamanı: **≈ 3 saat 15 dakika** (195 dk; duvar saati). Hesap: `ILERLEME.
 | Adım 2c → 2d (19:11 → 19:32), arada üçüncü gerçek deneme (BİLGİ EKSİK çalıştı, rework görünmedi) | 21 |
 | Adım 2d → 3 (19:32 → 19:39) | 7 |
 | Adım 3 → 4 (19:39 → 19:42) | 3 |
+| Adım 4 → 5 (19:42 → 20:52), arada Ceyda'nın gerçek Groq denemeleri ve arayüz kontrolü | 69 |
+| Adım 5 → 6 (20:52 → 20:55) | 3 |
+| Adım 6 → 7 (20:55 → 20:55) | 1 |
 
 ### İlk prompt
 

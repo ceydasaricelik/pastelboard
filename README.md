@@ -187,7 +187,7 @@ GitHub Actions ([`ci.yml`](.github/workflows/ci.yml)) her push ve pull request't
 - RuboCop (kod stili)
 - PostgreSQL servisi ile önce `EscalateOverdueCardsJobTest`, ardından tüm test paketi
 
-Testler 134 senaryoyu kapsar. İlk 34'ü insan panosuna aittir: `travel_to` ile zaman kuralı, durum geçişleri, sürükle-bırak, kart yaşlandırma, liste/kart/üye işlemleri. Kalanı ajan panosunu kapsar (aşağıda). Testler ağa çıkmaz: LLM çağrıları `FakeLlm` ile, HTTP isteği stub ile taklit edilir ve test sürecinde `GROQ_API_KEY` silinir.
+Testler 139 senaryoyu kapsar. İlk 34'ü insan panosuna aittir: `travel_to` ile zaman kuralı, durum geçişleri, sürükle-bırak, kart yaşlandırma, liste/kart/üye işlemleri. Kalanı ajan panosunu kapsar (aşağıda). Testler ağa çıkmaz: LLM çağrıları `FakeLlm` ile, HTTP isteği stub ile taklit edilir ve test sürecinde `GROQ_API_KEY` silinir.
 
 ## Yapamadıklarım
 
@@ -199,7 +199,7 @@ Testler 134 senaryoyu kapsar. İlk 34'ü insan panosuna aittir: `travel_to` ile 
 - **Tarayıcı (system) testleri yok:** Sürükle-bırak elle test edildi. Otomatik testler, sunucu tarafındaki `move` uç noktasını doğrular.
 - **Gerçek token faturası ölçülmedi:** Geliştirme abonelik üzerinden yapıldığı için Faz 2'deki dolar tutarı tahmindir.
 - **Ajan panosu: ajanlar kendiliğinden çalışmaz.** İşler yalnızca "Bir tur çalıştır" butonuyla (ya da `DemoRun` komutuyla) ilerler; zamanlanmış otomatik tur yok. Tur istek içinde senkron çalışır.
-- **Ajan panosu: gerçek Groq'ta tur süresi ölçülmedi** ve canlı ortamda doğrulanması kullanıcıya bırakıldı. Ekip rehberi şimdilik yalnızca demo seeder'ından gelir, düzenleme arayüzü yok.
+- **Ajan panosu: termos kartı gerçek denemede Done olmadı** (işçi mentorun dersini iki denemede uygulayamadı, kart insana devredildi); sonraki prompt düzeltmesi gerçek modelle denenmedi. Gerçek turlar yerelde 1–7 sn sürdü, ama tur istek içinde senkron çalışır. Ekip rehberi şimdilik yalnızca demo seeder'ından gelir, düzenleme arayüzü yok.
 - **Ajan panosu: mentor kriterleri atlarsa yakalanmaz.** Kod kuralı yalnızca mentorun `met=false` dediği kriterleri ve rehber ihlallerini yakalar; mentor bazı kriterleri hiç listelemeden pass derse bu geçer.
 
 ## Kaynaklar
