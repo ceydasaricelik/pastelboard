@@ -7,7 +7,7 @@
 
 PastelBoard, Kanban tarzı iş takip uygulamalarından, özellikle **Trello**'dan *ilham alınarak* Ruby on Rails 8 ile geliştirilmiş bir proje yönetim panosudur. Proje, bir kurumsal SaaS ürününün çekirdek iş akışını ("aort dilimi") yeniden inşa eder ve bu akışa kullanıcı şikâyetlerinden çıkan otomatik bir SLA eskalasyon kuralı ekler. PastelBoard'un Trello veya Atlassian ile bir bağlantısı yoktur; uygulamada orijinal markanın adı ya da logosu kullanılmaz.
 
-Ajanla çalışma kuralları ve mimari kararlar: [AGENT.md](AGENT.md)
+Ajanla çalışma kuralları ve mimari kararlar: [AGENTS.md](AGENTS.md)
 
 ## Özellikler
 

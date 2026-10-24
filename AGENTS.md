@@ -45,3 +45,13 @@ Bu bölüm, başlangıç planından sapılan yerleri ve nedenlerini kaydeder.
 - Ajan "yaptım" dediğinde sonuç tarayıcıda veya test çıktısıyla kontrol edilir; doğrulanmamış iddia README'ye yazılmaz.
 - README'deki her rakamın yanında kaynağı olur; kaynak bulunamayan rakam "tahmin" olarak işaretlenir veya yazılmaz.
 - Gizli dosyalar (`config/master.key`, `.env`) commit edilmez; anahtarlar Render ortam değişkeni olarak verilir.
+
+# Ajan panosu çalışma kuralları
+- Yeni bir oturuma başlarken önce `ILERLEME.md`'nin son kaydını oku.
+- Kod yazmadan önce kısa bir plan çıkar ve onayımı bekle.
+- Testlerden önce PostgreSQL kapalıysa `PROJE_DURUMU.md` bölüm 8'deki komutla aç.
+- Her adımın sonunda `bin/rails test`, `bin/rubocop`, `bin/brakeman --no-pager` çalıştır; hepsi temiz olmadan adım bitmiş sayılmaz.
+- Testler asla ağa çıkmaz; LLM çağrıları testlerde `FakeLlm` ile yapılır.
+- API anahtarı koda, commit'e veya log dosyalarına yazılmaz; yalnızca `ENV["GROQ_API_KEY"]` okunur.
+- Mevcut insan panosunun davranışı ve testleri bozulmaz; değişiklikler eklemeli yapılır.
+- Her adımın sonunda `ILERLEME.md`'ye kayıt ekle, sonra tek commit at. Commit mesajı Türkçe ve "Adım N: ..." ile başlar.
