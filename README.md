@@ -113,6 +113,27 @@ Kuralın ayrıntıları:
 - Kartlar bu listenin sonuna eklenir; ayrıldıkları listeler yeniden numaralandırılır.
 - Her pano tek bir veritabanı transaction'ı içinde işlenir.
 
+## Ajan panosu
+
+Panonun işçilerini ajanlara çeviren ikinci bir pano türü (`Board kind=agent`); insan panosu aynen çalışmaya devam eder. Gerekçe ve kanıtlar: [CHALLENGE_LOG.md](CHALLENGE_LOG.md). Acı: ajanlarla çalışan ekiplerde ajan görevden sapar, adım tekrarlar, yanlış çıktıyı bitmiş gibi teslim eder ([MAST, 14 hata türü](https://arxiv.org/abs/2503.13657)).
+
+- **Akış:** İşçi ajanlar Havuz'dan iş alır (koşullu `UPDATE` ile atomik) ve kartın kontrol listesini kabul kriteri olarak kullanarak çıktı üretir. Mentor ajan teslimi kriter kriter inceler ve `pass`, `revise` ya da `escalate` der. `revise`'ta geri bildirim karta, ders işçinin ders defterine yazılır; işçi kendi dersiyle düzeltir. Kartlar "Havuz → Mentor incelemesinde → Düzeltmede → İnsana devredildi / Done" listeleri arasında servis üzerinden taşınır, sürükle-bırak yoktur.
+- **İnsana devir:** İkinci denemede de düzelmeyen kart, işçinin öncekiyle aynı çıktıyı tekrarlaması (döngü) ve mentorun `escalate` demesi kartı insana devreder. İşçi, görev için gereken bilgi kartta yoksa uydurmaz: çıktıyı "BİLGİ EKSİK:" ile başlatıp insana soru sorar. İnsan "İpucu ver ve geri gönder" ya da "Onayla, Done'a taşı" der.
+- **Güvenlik ağları (LLM'siz):** Mentor pass dese bile `met=false` kriter ya da ekip rehberi ihlali varsa sonuç revise olur. Mentorun geçersiz verdict'i, kartta olmayan `item_id`'ler, HTTP hataları ve zaman aşımı kartı yerinde bırakır ve "LLM hatası" olayı yazar; ağ hatasında tek yeniden deneme yapılır.
+- **Ekip rehberi:** Panonun `guidelines` alanı yalnızca mentor promptuna girer; işçi bilmez. İhlaller `guideline_violations` olarak kaydedilir ve kart detayında görünür.
+- **Eşzamanlılık:** Her kart satır kilidiyle (`with_lock`) ilerler ve kilit içinde durumu yeniden kontrol edilir; iki tur aynı anda çalışsa da kart iki kez işlenmez.
+- **Geçmiş:** Kartın tüm tarihi `AgentEvent` kayıtlarında tutulur ve kart detayında zaman çizelgesi olarak görünür.
+- **LLM:** Tek sağlayıcı Groq (OpenAI uyumlu API, `Net::HTTP`, yeni gem yok). Anahtar yalnızca `ENV["GROQ_API_KEY"]` üzerinden okunur. Anahtar yoksa `FakeLlm` kullanılır ve olaylara "simülasyon modu" yazılır. Mentor cevabı `json_schema` + `strict: true` ile alınır.
+- **Arayüz:** "▶ Bir tur çalıştır", Havuz'da "+ Görev ekle" (her kriter satırı bir kontrol listesi maddesi olur), kart detayında çıktı, kriter bazında ✓/✗, rehber ihlali ve zaman çizelgesi, yan bölümde ekip rehberi ve ajanlar (ders defterleriyle).
+- **Kodda nerede:** `app/services/agent_boards/` (`tick.rb`, `human_actions.rb`, `demo_seeder.rb`, `demo_run.rb`, `prompts.rb`), `app/services/groq_llm.rb` ve `fake_llm.rb`, `app/views/agent_boards/`, `app/controllers/{rounds,agent_tasks,hints,approvals,agent_demos}_controller.rb`.
+
+Terminalden bir tur çalıştırmak için (anahtar ayarlıysa gerçek Groq ile, değilse simülasyonla):
+
+```bash
+bin/rails runner "AgentBoards::DemoRun.call"   # demo panoyu sıfırlar ve bir tur çalıştırır
+bin/rails runner "AgentBoards::DemoRun.tick"   # aynı panoda bir tur daha
+```
+
 ## Mimari ve Deploy
 
 - **Canlı güncelleme:** WebSocket (ActionCable) yerine **Turbo 8 morphing** kullanılır. Her işlemden sonra sayfa yenilenir, ama Turbo yalnızca değişen kısımları günceller ve kaydırma konumu korunur. WebSocket ile yayın yapmak için Redis ya da ayrı bir veritabanı gerekirdi.
@@ -124,6 +145,8 @@ Kuralın ayrıntıları:
 ### Render ortam değişkenleri
 
 `DATABASE_URL`, `RAILS_MASTER_KEY`, `SOLID_QUEUE_IN_PUMA=true`, demo için `DEMO_MODE=1`.
+
+Ajan panosu için ek olarak: `GROQ_API_KEY` (yoksa pano "simülasyon modu"nda çalışır), isteğe bağlı `GROQ_WORKER_MODEL` (varsayılan `openai/gpt-oss-20b`), `GROQ_MENTOR_MODEL` (varsayılan `openai/gpt-oss-120b`) ve `AGENT_ROUND_LIMIT` (tur başına kart sınırı, varsayılan 3). `DEMO_MODE` ayarlıysa pano listesinde "Demo ajan panosu oluştur/sıfırla" butonu görünür.
 
 ## Kurulum (yerel)
 
@@ -153,7 +176,7 @@ GitHub Actions ([`ci.yml`](.github/workflows/ci.yml)) her push ve pull request't
 - RuboCop (kod stili)
 - PostgreSQL servisi ile önce `EscalateOverdueCardsJobTest`, ardından tüm test paketi
 
-Testler 34 senaryoyu kapsar: `travel_to` ile zaman kuralı, durum geçişleri, sürükle-bırak, kart yaşlandırma, liste/kart/üye işlemleri.
+Testler 134 senaryoyu kapsar. İlk 34'ü insan panosuna aittir: `travel_to` ile zaman kuralı, durum geçişleri, sürükle-bırak, kart yaşlandırma, liste/kart/üye işlemleri. Kalanı ajan panosunu kapsar (aşağıda). Testler ağa çıkmaz: LLM çağrıları `FakeLlm` ile, HTTP isteği stub ile taklit edilir ve test sürecinde `GROQ_API_KEY` silinir.
 
 ## Yapamadıklarım
 
@@ -164,6 +187,9 @@ Testler 34 senaryoyu kapsar: `travel_to` ile zaman kuralı, durum geçişleri, s
 - **Trello özelliklerinin bir kısmı yok:** Yorumlar, aktivite geçmişi, dosya ekleri, arama/filtreleme, arşivleme ve etiket oluşturma/düzenleme arayüzü yok (her pano altı varsayılan etiketle gelir).
 - **Tarayıcı (system) testleri yok:** Sürükle-bırak elle test edildi. Otomatik testler, sunucu tarafındaki `move` uç noktasını doğrular.
 - **Gerçek token faturası ölçülmedi:** Geliştirme abonelik üzerinden yapıldığı için Faz 2'deki dolar tutarı tahmindir.
+- **Ajan panosu: ajanlar kendiliğinden çalışmaz.** İşler yalnızca "Bir tur çalıştır" butonuyla (ya da `DemoRun` komutuyla) ilerler; zamanlanmış otomatik tur yok. Tur istek içinde senkron çalışır.
+- **Ajan panosu: gerçek Groq'ta tur süresi ölçülmedi** ve canlı ortamda doğrulanması kullanıcıya bırakıldı. Ekip rehberi şimdilik yalnızca demo seeder'ından gelir, düzenleme arayüzü yok.
+- **Ajan panosu: mentor kriterleri atlarsa yakalanmaz.** Kod kuralı yalnızca mentorun `met=false` dediği kriterleri ve rehber ihlallerini yakalar; mentor bazı kriterleri hiç listelemeden pass derse bu geçer.
 
 ## Kaynaklar
 
