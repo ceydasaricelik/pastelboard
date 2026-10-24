@@ -5,7 +5,14 @@ module AgentBoards
     # The card that cannot be finished without a person: its brief leaves out what the text is about.
     MISSING_INFO_TITLE = "Yeni ürün için açıklama metni"
 
-    WORKERS = %w[ Ece Deniz ].freeze
+    # What the mentor knows about the team and the workers do not.
+    GUIDELINES = [
+      "Müşteriye \"sen\" diye hitap et, \"siz\" kullanma.",
+      "Ünlem işareti kullanma.",
+      "Her metin \"PastelShop\" kelimesiyle bitsin."
+    ].freeze
+
+    WORKERS =%w[ Ece Deniz ].freeze
     MENTOR = "Mentor Mert"
 
     TASKS = [
@@ -35,7 +42,7 @@ module AgentBoards
     def call
       Board.transaction do
         Board.find_by(name: BOARD_NAME)&.destroy!
-        board = Board.create!(name: BOARD_NAME, kind: :agent,
+        board = Board.create!(name: BOARD_NAME, kind: :agent, guidelines: GUIDELINES.map { |rule| "- #{rule}" }.join("\n"),
                               description: "İşçi ajanlar havuzdan iş alır, mentor ajan teslimleri inceler.")
         board.ensure_agent_lists!
         create_members(board)

@@ -43,9 +43,10 @@ class GroqLlm
         }
       },
       feedback: { type: "string" },
-      lesson: { type: "string" }
+      lesson: { type: "string" },
+      guideline_violations: { type: "array", items: { type: "string" } }
     },
-    required: %w[ verdict criteria feedback lesson ],
+    required: %w[ verdict criteria feedback lesson guideline_violations ],
     additionalProperties: false
   }.freeze
 

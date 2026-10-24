@@ -41,7 +41,12 @@ class FakeLlm
     count = @review_counts[card.id] += 1
     items = card.checklist_items.to_a
 
-    if count == 1
+    if count == 1 && card.board.guidelines.present?
+      { verdict: "revise", criteria: criteria(items, unmet: []),
+        feedback: "Ekip rehberine aykırı: her metin \"PastelShop\" kelimesiyle bitmeli.",
+        lesson: "Her metni \"PastelShop\" kelimesiyle bitir.",
+        guideline_violations: [ "Her metin \"PastelShop\" kelimesiyle bitsin" ] }
+    elsif count == 1
       { verdict: "revise", criteria: criteria(items, unmet: items.first(1)),
         feedback: "Kriterlerden biri karşılanmıyor; metni kriterlere göre düzelt.",
         lesson: "Teslim etmeden önce her kabul kriterini tek tek kontrol et." }

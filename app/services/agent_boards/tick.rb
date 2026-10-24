@@ -124,7 +124,8 @@ module AgentBoards
 
       def apply_review(card, mentor, result)
         worker = card.assignee
-        data = { verdict: result[:verdict], criteria: result[:criteria], lesson: result[:lesson] }
+        data = { verdict: result[:verdict], criteria: result[:criteria], lesson: result[:lesson],
+                 guideline_violations: result[:guideline_violations] }
         data[:overridden_from] = result[:overridden_from] if result[:overridden_from]
 
         case result[:verdict]
@@ -138,8 +139,7 @@ module AgentBoards
             log(card, "watchdog", "#{card.attempts}. denemede de düzelmedi; insana devredildi.", actor: mentor, **data)
           else
             card.agent_transition!(:rework, feedback: result[:feedback])
-            message = result[:overridden_from] ? "#{mentor.name} pass dedi ama karşılanmayan kriter var; düzeltme istendi." : "#{mentor.name} düzeltme istedi."
-            log(card, "revised", message, actor: mentor, **data)
+            log(card, "revised", revise_message(mentor, result), actor: mentor, **data)
           end
         when "escalate"
           card.agent_transition!(:needs_human, feedback: result[:feedback])
@@ -161,18 +161,30 @@ module AgentBoards
         criteria = criteria.grep(Hash).map(&:with_indifferent_access).select { |criterion| item_ids.include?(criterion[:item_id].to_i) }
 
         criteria = criteria.map { |c| { item_id: c[:item_id].to_i, met: c[:met] == true, reason: c[:reason].to_s } }
-        normalized = { verdict: verdict, criteria: criteria, feedback: result[:feedback].to_s.presence, lesson: result[:lesson].to_s.presence }
-        enforce_criteria(normalized, card)
+        violations = Array(result[:guideline_violations]).map { |violation| violation.to_s.squish }.reject(&:blank?)
+        normalized = { verdict: verdict, criteria: criteria, feedback: result[:feedback].to_s.presence,
+                       lesson: result[:lesson].to_s.presence, guideline_violations: violations }
+        enforce_pass_rules(normalized, card)
       end
 
-      # A pass is only a pass when no criterion was marked unmet.
-      def enforce_criteria(result, card)
+      # A pass is only a pass when no criterion was marked unmet and no team guideline was broken.
+      def enforce_pass_rules(result, card)
         unmet = result[:criteria].reject { |criterion| criterion[:met] }
-        return result unless result[:verdict] == "pass" && unmet.any?
+        violations = result[:guideline_violations]
+        return result unless result[:verdict] == "pass" && (unmet.any? || violations.any?)
 
         contents = card.checklist_items.index_by(&:id)
-        listed = unmet.map { |criterion| contents[criterion[:item_id]].content }.join("; ")
-        result.merge(verdict: "revise", overridden_from: "pass", feedback: result[:feedback] || "Karşılanmayan kriterler: #{listed}")
+        reasons = []
+        reasons << "Karşılanmayan kriterler: #{unmet.map { |criterion| contents[criterion[:item_id]].content }.join('; ')}" if unmet.any?
+        reasons << "Ekip rehberi ihlali: #{violations.join('; ')}" if violations.any?
+        result.merge(verdict: "revise", overridden_from: "pass", feedback: result[:feedback] || reasons.join(". "))
+      end
+
+      def revise_message(mentor, result)
+        return "#{mentor.name} düzeltme istedi." unless result[:overridden_from]
+
+        unmet = result[:criteria].any? { |criterion| !criterion[:met] }
+        "#{mentor.name} pass dedi ama " + (unmet ? "karşılanmayan kriter var" : "ekip rehberine aykırılık var") + "; düzeltme istendi."
       end
 
       # "BİLGİ EKSİK: <question>" at the very start of a delivery means the worker is asking a person.

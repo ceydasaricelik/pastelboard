@@ -49,7 +49,8 @@ Bu bölüm, başlangıç planından sapılan yerleri ve nedenlerini kaydeder.
 # Ajan panosu çalışma kuralları
 - Bu makine Windows: bin/ komutlarını `ruby bin/rails ...`, `ruby bin/rubocop`, `ruby bin/brakeman --no-pager` şeklinde çalıştır.
 - Yeni bir oturuma başlarken önce `ILERLEME.md`'nin son kaydını oku.
-- Kod yazmadan önce kısa bir plan çıkar ve onayımı bekle.
+- Özerk çalışma: plan onayı bekleme. Kısa planını yaz ve hemen uygula. Test, rubocop veya brakeman hatası çıkarsa kendin düzelt. Proje kapsamında kalan küçük tasarım kararlarını kendin ver ve `ILERLEME.md`'ye not düş.
+- Yalnızca şu durumlarda dur ve Ceyda'ya sor: veri silme veya geri alınamaz bir işlem; yeni gem veya yeni dış servis; mevcut insan panosu davranışını değiştirmek; 3 denemede çözemediğin bir hata.
 - Testlerden önce PostgreSQL kapalıysa `PROJE_DURUMU.md` bölüm 8'deki komutla aç.
 - Her adımın sonunda `bin/rails test`, `bin/rubocop`, `bin/brakeman --no-pager` çalıştır; hepsi temiz olmadan adım bitmiş sayılmaz.
 - Testler asla ağa çıkmaz; LLM çağrıları testlerde `FakeLlm` ile yapılır.

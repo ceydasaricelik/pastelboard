@@ -82,7 +82,8 @@ class GroqLlmTest < ActiveSupport::TestCase
     assert_equal true, format["json_schema"]["strict"]
 
     schema = format["json_schema"]["schema"]
-    assert_equal %w[ verdict criteria feedback lesson ], schema["required"]
+    assert_equal %w[ verdict criteria feedback lesson guideline_violations ], schema["required"]
+    assert_equal "array", schema["properties"]["guideline_violations"]["type"]
     assert_equal %w[ pass revise escalate ], schema["properties"]["verdict"]["enum"]
     item = schema["properties"]["criteria"]["items"]
     assert_equal %w[ item_id met reason ], item["required"]
