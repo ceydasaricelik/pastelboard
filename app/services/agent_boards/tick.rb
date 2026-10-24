@@ -31,25 +31,35 @@ module AgentBoards
       STATES.flat_map { |state| scope.where(agent_state: state).order(:position, :id).to_a }
     end
 
-    # Returns how many cards were attempted (a failed model call counts, a card someone else
-    # already moved does not). `cards` is the snapshot to work through.
+    # What a round did: cards that moved a step, and cards whose model call failed.
+    Summary = Struct.new(:advanced, :errors) do
+      def to_s
+        [ "#{advanced} kart ilerledi", ("#{errors} LLM hatası" if errors > 0) ].compact.join(", ")
+      end
+    end
+
+    # `cards` is the snapshot to work through. A failed model call counts toward MAX_CARDS but not
+    # as progress; a card someone else already moved counts for neither.
     def call(cards = candidates)
       busy = Set.new
-      moved = 0
+      summary = Summary.new(0, 0)
 
       cards.each do |card|
-        break if moved >= MAX_CARDS
+        break if summary.advanced + summary.errors >= MAX_CARDS
 
-        moved += 1 if step(card, busy)
+        case step(card, busy)
+        when :advanced then summary.advanced += 1
+        when :error then summary.errors += 1
+        end
       end
-      moved
+      summary
     end
 
     private
       def step(card, busy)
         expected = card.agent_state
 
-        card.with_lock do
+        moved = card.with_lock do
           next false unless card.agent_state == expected
 
           case expected
@@ -59,10 +69,11 @@ module AgentBoards
           else false
           end
         end
+        moved ? :advanced : :skipped
       rescue LlmError => error
         stage = expected == "in_review" ? "review" : "write"
         log(card.reload, "llm_error", "LLM hatası (#{stage}): #{error.message.truncate(300)}", stage: stage)
-        true
+        :error
       end
 
       def review(card)

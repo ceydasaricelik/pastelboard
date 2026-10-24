@@ -19,10 +19,10 @@ module AgentBoards
 
     def call
       @out.puts @llm.simulated? ? "Mod: simülasyon (GROQ_API_KEY yok)" : "Mod: Groq (gerçek LLM)"
-      moved = Tick.new(@board, llm: @llm).call
-      @out.puts "Tur bitti: #{moved} kart ilerledi."
+      summary = Tick.new(@board, llm: @llm).call
+      @out.puts "Tur bitti: #{summary}."
       report
-      moved
+      summary
     end
 
     private

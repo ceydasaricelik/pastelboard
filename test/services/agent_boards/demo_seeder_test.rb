@@ -6,8 +6,8 @@ class AgentBoards::DemoSeederTest < ActiveSupport::TestCase
 
     assert board.agent?
     assert_equal List::AGENT_STATE_LISTS.values, board.lists.map(&:name)
-    assert_equal [ "llama-3.1-8b-instant" ] * 2, board.members.worker.map(&:model)
-    assert_equal [ "openai/gpt-oss-120b" ], board.members.mentor.map(&:model)
+    assert_equal [ AgentBoards::Models.worker ] * 2, board.members.worker.map(&:model)
+    assert_equal [ AgentBoards::Models.mentor ], board.members.mentor.map(&:model)
 
     cards = board.agent_list(:open).cards
     assert_equal 4, cards.size

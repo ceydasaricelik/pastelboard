@@ -18,7 +18,9 @@ class AgentBoards::TickResilienceTest < ActiveSupport::TestCase
     board = create_agent_board
     card = create_agent_card(board)
 
-    assert_equal 1, tick(board, FailFirstWriteLlm.new(writes: [ "x" ]))
+    summary = tick(board, FailFirstWriteLlm.new(writes: [ "x" ]))
+    assert_equal [ 0, 1 ], [ summary.advanced, summary.errors ]
+    assert_equal "0 kart ilerledi, 1 LLM hatası", summary.to_s
 
     card.reload
     assert card.agent_open?
@@ -47,7 +49,9 @@ class AgentBoards::TickResilienceTest < ActiveSupport::TestCase
     board = create_agent_board(workers: 3)
     cards = Array.new(4) { |i| create_agent_card(board, title: "K#{i}") }
 
-    assert_equal 3, tick(board, FailFirstWriteLlm.new(writes: %w[ a b ]))
+    summary = tick(board, FailFirstWriteLlm.new(writes: %w[ a b ]))
+    assert_equal [ 2, 1 ], [ summary.advanced, summary.errors ]
+    assert_equal "2 kart ilerledi, 1 LLM hatası", summary.to_s
 
     assert_equal %w[ open in_review in_review open ], cards.map { |card| card.reload.agent_state }
   end
@@ -75,7 +79,7 @@ class AgentBoards::TickResilienceTest < ActiveSupport::TestCase
     tick(board, FakeLlm.new(writes: [ "metin" ]))
     llm = FakeLlm.new(reviews: [ { verdict: "banana" } ])
 
-    assert_equal 1, tick(board, llm)
+    assert_equal 1, tick(board, llm).errors
     assert_equal 1, llm.prompts.count { |entry| entry[:kind] == :review }
   end
 
@@ -114,7 +118,8 @@ class AgentBoards::TickResilienceTest < ActiveSupport::TestCase
     tick(board, FakeLlm.new(writes: [ "ilk" ]))
 
     late = FakeLlm.new(writes: [ "ikinci" ])
-    assert_equal 0, AgentBoards::Tick.new(board, llm: late).call(snapshot)
+    summary = AgentBoards::Tick.new(board, llm: late).call(snapshot)
+    assert_equal [ 0, 0 ], [ summary.advanced, summary.errors ]
 
     assert_empty late.prompts
     card.reload
@@ -133,7 +138,8 @@ class AgentBoards::TickResilienceTest < ActiveSupport::TestCase
     tick(board, FakeLlm.new(reviews: [ { verdict: "pass" } ]))
 
     late = FakeLlm.new(reviews: [ { verdict: "revise" } ])
-    assert_equal 0, AgentBoards::Tick.new(board, llm: late).call(snapshot)
+    summary = AgentBoards::Tick.new(board, llm: late).call(snapshot)
+    assert_equal [ 0, 0 ], [ summary.advanced, summary.errors ]
 
     assert_empty late.prompts
     assert card.reload.agent_done?
@@ -160,7 +166,7 @@ class AgentBoards::TickResilienceTest < ActiveSupport::TestCase
     http.define_singleton_method(:request) { |_request| response }
 
     stub_class_method(Net::HTTP, :start, ->(*, **, &block) { block.call(http) }) do
-      assert_equal 1, tick(board, llm)
+      assert_equal 1, tick(board, llm).errors
     end
 
     card.reload

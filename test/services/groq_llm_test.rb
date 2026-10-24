@@ -23,7 +23,7 @@ class GroqLlmTest < ActiveSupport::TestCase
     @worker = @board.members.worker.first
     @mentor = @board.members.mentor.first
     @mentor.update!(model: "openai/gpt-oss-120b")
-    @worker.update!(model: "llama-3.1-8b-instant")
+    @worker.update!(model: "openai/gpt-oss-20b")
     @card = create_agent_card(@board)
     @llm = GroqLlm.new(api_key: "test-key")
   end
@@ -44,18 +44,18 @@ class GroqLlmTest < ActiveSupport::TestCase
     [ http, started.first ]
   end
 
-  test "write asks the worker's model for plain text with a short limit" do
+  test "write asks the worker's model for plain text, with low reasoning effort" do
     http, started = with_http(reply("  Ürün metni  ")) do
       assert_equal "Ürün metni", @llm.write(card: @card, worker: @worker, prompt: "Görev: x")
     end
 
     request = http.requests.sole
     body = JSON.parse(request.body)
-    assert_equal "llama-3.1-8b-instant", body["model"]
-    assert_equal 300, body["max_tokens"]
+    assert_equal "openai/gpt-oss-20b", body["model"]
+    assert_equal 800, body["max_tokens"]
     assert_equal "Görev: x", body["messages"].last["content"]
     assert_not body.key?("response_format")
-    assert_not body.key?("reasoning_effort")
+    assert_equal "low", body["reasoning_effort"]
     assert_equal "Bearer test-key", request["Authorization"]
     assert_equal "/openai/v1/chat/completions", request.path
 
@@ -88,11 +88,22 @@ class GroqLlmTest < ActiveSupport::TestCase
     [ schema, item ].each { |object| assert_equal false, object["additionalProperties"] }
   end
 
-  test "reasoning_effort is only sent to gpt-oss models" do
+  test "reasoning_effort is only sent to gpt-oss models, for write and review" do
     @mentor.update!(model: "llama-3.3-70b-versatile")
-    http, = with_http(reply("{}")) { @llm.review(card: @card, mentor: @mentor, prompt: "x") }
+    @worker.update!(model: "llama-3.3-70b-versatile")
+    review, = with_http(reply("{}")) { @llm.review(card: @card, mentor: @mentor, prompt: "x") }
+    write, = with_http(reply("metin")) { @llm.write(card: @card, worker: @worker, prompt: "x") }
 
-    assert_not JSON.parse(http.requests.sole.body).key?("reasoning_effort")
+    [ review, write ].each { |http| assert_not JSON.parse(http.requests.sole.body).key?("reasoning_effort") }
+  end
+
+  test "an empty write answer (a reasoning model out of tokens) raises LlmError" do
+    [ reply(""), reply(nil, finish_reason: "length") ].each do |response|
+      with_http(response) do
+        error = assert_raises(LlmError) { @llm.write(card: @card, worker: @worker, prompt: "x") }
+        assert_match(/boş/, error.message)
+      end
+    end
   end
 
   test "HTTP errors, truncated and broken answers raise LlmError" do

@@ -7,8 +7,8 @@ class GroqLlm
   ENDPOINT = URI("https://api.groq.com/openai/v1/chat/completions")
   OPEN_TIMEOUT = 5
   READ_TIMEOUT = 20
-  WRITE_MAX_TOKENS = 300
-  # gpt-oss spends part of this on reasoning before it answers.
+  # gpt-oss models spend part of these on reasoning before they answer.
+  WRITE_MAX_TOKENS = 800
   REVIEW_MAX_TOKENS = 1000
   NETWORK_ERRORS = [
     Net::OpenTimeout, Net::ReadTimeout, Net::WriteTimeout, SocketError, EOFError,
@@ -55,8 +55,12 @@ class GroqLlm
   def write(card:, worker:, prompt:)
     content, = complete(
       model: worker.model, max_tokens: WRITE_MAX_TOKENS,
-      messages: [ { role: "system", content: WRITER_ROLE }, { role: "user", content: prompt } ]
+      messages: [ { role: "system", content: WRITER_ROLE }, { role: "user", content: prompt } ],
+      **reasoning(worker.model)
     )
+    # A reasoning model that ran out of tokens answers with nothing.
+    raise LlmError, "Groq boş cevap döndü" if content.to_s.strip.empty?
+
     content.to_s.strip
   end
 
@@ -64,9 +68,9 @@ class GroqLlm
     body = {
       model: mentor.model, max_tokens: REVIEW_MAX_TOKENS,
       messages: [ { role: "system", content: MENTOR_ROLE }, { role: "user", content: prompt } ],
-      response_format: { type: "json_schema", json_schema: { name: "review", strict: true, schema: REVIEW_SCHEMA } }
+      response_format: { type: "json_schema", json_schema: { name: "review", strict: true, schema: REVIEW_SCHEMA } },
+      **reasoning(mentor.model)
     }
-    body[:reasoning_effort] = "low" if mentor.model.to_s.start_with?("openai/gpt-oss")
 
     content, finish_reason = complete(**body)
     raise LlmError, "Groq cevabı max_tokens sınırında kesildi" if finish_reason == "length"
@@ -77,6 +81,11 @@ class GroqLlm
   end
 
   private
+    # Only the gpt-oss models take reasoning_effort.
+    def reasoning(model)
+      model.to_s.start_with?("openai/gpt-oss") ? { reasoning_effort: "low" } : {}
+    end
+
     # Returns [content, finish_reason] of the first choice.
     def complete(**body)
       response = post(body)

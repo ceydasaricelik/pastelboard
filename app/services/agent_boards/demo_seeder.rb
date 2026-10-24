@@ -5,8 +5,6 @@ module AgentBoards
     # The card that cannot be finished without a person: its brief leaves out what the text is about.
     MISSING_INFO_TITLE = "Yeni ürün için açıklama metni"
 
-    WORKER_MODEL = "llama-3.1-8b-instant"
-    MENTOR_MODEL = "openai/gpt-oss-120b"
     WORKERS = %w[ Ece Deniz ].freeze
     MENTOR = "Mentor Mert"
 
@@ -43,8 +41,8 @@ module AgentBoards
 
     private
       def create_members(board)
-        WORKERS.each { |name| board.members.create!(name: name, kind: :agent, role: :worker, model: WORKER_MODEL) }
-        board.members.create!(name: MENTOR, kind: :agent, role: :mentor, model: MENTOR_MODEL)
+        WORKERS.each { |name| board.members.create!(name: name, kind: :agent, role: :worker, model: Models.worker) }
+        board.members.create!(name: MENTOR, kind: :agent, role: :mentor, model: Models.mentor)
       end
 
       def create_card(board, task)

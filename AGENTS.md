@@ -56,3 +56,4 @@ Bu bölüm, başlangıç planından sapılan yerleri ve nedenlerini kaydeder.
 - API anahtarı koda, commit'e veya log dosyalarına yazılmaz; yalnızca `ENV["GROQ_API_KEY"]` okunur.
 - Mevcut insan panosunun davranışı ve testleri bozulmaz; değişiklikler eklemeli yapılır.
 - Her adımın sonunda `ILERLEME.md`'ye kayıt ekle, sonra tek commit at. Commit mesajı Türkçe ve "Adım N: ..." ile başlar.
+- Bir adımın commit'inden sonra test, rubocop ve brakeman temizse `git push` yap. Force push asla yapma. Push başarısız olursa dur ve Ceyda'ya bildir.
