@@ -86,3 +86,12 @@ Ajan panosu çalışmasının adım adım kayıt defteri. Her adımın sonunda b
 - Commit mesajı: Adım 4: CHALLENGE_LOG kanıtları, demo senaryosu ve README'de ajan panosu bölümü
 - Açık kalanlar / notlar: Gerçek Groq'ta tur süresi ölçülmedi (30 sn'yi geçerse `AGENT_ROUND_LIMIT=2`); rehberli gerçek deneme, Render'da ortam değişkenleri/migration kontrolü ve canlı demo Ceyda'da.
 - Ceyda'nın süresi:
+
+## Adım 5 — CI düzeltmesi (crass güvenlik ilanı)
+- Tarih/saat: 2026-10-24 20:52:01 +03:00
+- Ne yapıldı: GitHub CI'daki bundler-audit adımı crass 1.0.7 için GHSA-pq4g-8rxf-4g29 ilanını yakaladı. `bundle update crass --conservative` ile crass 1.0.8'e çıkıldı (yalnızca Gemfile.lock'ta iki satır değişti). `.github/workflows/ci.yml`deki tüm adımlar yerelde çalıştırıldı: bundler-audit (açık yok), importmap audit (açık yok), rubocop, brakeman, testler.
+- Eklenen/değişen dosyalar: Gemfile.lock, ILERLEME.md
+- Testler: 134 test, 651 doğrulama, 0 hata (RuboCop ve Brakeman temiz)
+- Commit mesajı: Adım 5: crass 1.0.8'e güncellendi (GHSA-pq4g-8rxf-4g29), CI yeşile döndürülüyor
+- Açık kalanlar / notlar: gh CLI bu makinede yok; push sonrası CI sonucu GitHub'daki Actions sayfasından Ceyda tarafından görülmeli.
+- Ceyda'nın süresi:
