@@ -12,8 +12,29 @@ class AgentBoards::DemoSeederTest < ActiveSupport::TestCase
     cards = board.agent_list(:open).cards
     assert_equal 4, cards.size
     assert cards.all?(&:agent_open?)
-    assert cards.all? { |card| card.checklist_items.size == 3 }
+    assert cards.all? { |card| card.checklist_items.size >= 3 }
     assert_includes cards.map(&:title), AgentBoards::DemoSeeder::MISSING_INFO_TITLE
+  end
+
+  test "the missing-information card has no product in its description and forbids invention" do
+    board = AgentBoards::DemoSeeder.call
+    card = board.agent_list(:open).cards.find_by!(title: AgentBoards::DemoSeeder::MISSING_INFO_TITLE)
+
+    assert_not_includes card.description, "Ürün:"
+    assert_not_includes card.description, "Özellikler:"
+    assert_not_includes card.description, "TL"
+    assert_includes card.checklist_items.map(&:content), "Ürün adı ve özellikleri karttaki bilgiye dayanmalı, uydurma bilgi olmamalı"
+  end
+
+  test "two cards carry facts and criteria that are easy to miss but countable" do
+    board = AgentBoards::DemoSeeder.call
+    cards = board.agent_list(:open).cards.where(title: [ "Kablosuz kulaklık açıklaması", "Termos şişe açıklaması" ])
+
+    assert_equal 2, cards.size
+    cards.each do |card|
+      assert_includes card.description, "Ürün:"
+      assert card.checklist_items.any? { |item| item.content.start_with?("Tam olarak") }, "#{card.title} has no exact-count criterion"
+    end
   end
 
   test "running it again resets the same board" do

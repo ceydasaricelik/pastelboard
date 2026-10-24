@@ -1,6 +1,6 @@
 # A stand-in for the real model. Without a scenario it plays the demo: a worker's first delivery
-# gets "revise", the second gets "pass", and the card titled AgentBoards::DemoSeeder::MISSING_INFO_TITLE
-# gets "escalate". Tests pass their own `writes:` and `reviews:`, answered in order.
+# gets "revise" and the second gets "pass"; the worker asks a person ("BİLGİ EKSİK:") on its first try at
+# the card titled AgentBoards::DemoSeeder::MISSING_INFO_TITLE. Tests pass their own `writes:` and `reviews:`, answered in order.
 class FakeLlm
   class ScenarioExhausted < StandardError; end
 
@@ -25,7 +25,9 @@ class FakeLlm
     return next_of(@writes, "writes") if @writes
 
     count = @write_counts[card.id] += 1
-    if count == 1
+    if card.title == AgentBoards::DemoSeeder::MISSING_INFO_TITLE && count == 1
+      "BİLGİ EKSİK: Ürünün adı ve özellikleri nedir?"
+    elsif count == 1
       "#{card.title}: harika bir ürün! 🎉 Hemen keşfedin."
     else
       "#{card.title}: dayanıklı ve şık. Siparişlerde ücretsiz kargo sizi bekliyor. (sürüm #{count})"
@@ -39,10 +41,7 @@ class FakeLlm
     count = @review_counts[card.id] += 1
     items = card.checklist_items.to_a
 
-    if card.title == AgentBoards::DemoSeeder::MISSING_INFO_TITLE
-      { verdict: "escalate", criteria: criteria(items, unmet: items),
-        feedback: "Ürünle ilgili gerekli bilgi kartta yok; bir insanın tamamlaması gerekiyor." }
-    elsif count == 1
+    if count == 1
       { verdict: "revise", criteria: criteria(items, unmet: items.first(1)),
         feedback: "Kriterlerden biri karşılanmıyor; metni kriterlere göre düzelt.",
         lesson: "Teslim etmeden önce her kabul kriterini tek tek kontrol et." }

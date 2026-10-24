@@ -25,7 +25,7 @@ class GroqLlmTest < ActiveSupport::TestCase
     @mentor.update!(model: "openai/gpt-oss-120b")
     @worker.update!(model: "openai/gpt-oss-20b")
     @card = create_agent_card(@board)
-    @llm = GroqLlm.new(api_key: "test-key")
+    @llm = GroqLlm.new(api_key: "test-key", retry_delay: 0)
   end
 
   def reply(content, finish_reason: "stop")
@@ -73,8 +73,9 @@ class GroqLlmTest < ActiveSupport::TestCase
 
     body = JSON.parse(http.requests.sole.body)
     assert_equal "openai/gpt-oss-120b", body["model"]
-    assert_equal 1000, body["max_tokens"]
-    assert_equal "low", body["reasoning_effort"]
+    assert_equal 2000, body["max_tokens"]
+    assert_equal "medium", body["reasoning_effort"]
+    assert_includes body["messages"].first["content"], "met=false"
 
     format = body["response_format"]
     assert_equal "json_schema", format["type"]
@@ -124,12 +125,62 @@ class GroqLlmTest < ActiveSupport::TestCase
   end
 
   test "timeouts and connection errors raise LlmError without leaking the key" do
-    [ Net::OpenTimeout, Net::ReadTimeout, Errno::ECONNREFUSED, SocketError ].each do |failure|
+    [ Net::OpenTimeout, Net::ReadTimeout, Errno::ECONNREFUSED, SocketError, Socket::ResolutionError ].each do |failure|
       error = nil
       stub_class_method(Net::HTTP, :start, ->(*, **, &) { raise failure }) do
         error = assert_raises(LlmError) { @llm.write(card: @card, worker: @worker, prompt: "x") }
       end
       assert_no_match(/test-key/, error.message)
+    end
+  end
+
+  # Net::HTTP.start fails with each of the given errors in turn, then answers with the response.
+  def with_failing_network(errors, response)
+    calls = 0
+    http = FakeHttp.new(response)
+    starter = lambda do |*, **, &block|
+      calls += 1
+      raise errors[calls - 1] if calls <= errors.size
+
+      block.call(http)
+    end
+    stub_class_method(Net::HTTP, :start, starter) { yield }
+    calls
+  end
+
+  test "a network error is retried exactly once" do
+    calls = with_failing_network([ Socket::ResolutionError ], reply("Metin")) do
+      assert_equal "Metin", @llm.write(card: @card, worker: @worker, prompt: "x")
+    end
+
+    assert_equal 2, calls
+  end
+
+  test "two network errors in a row give up after exactly two tries" do
+    calls = with_failing_network([ Net::ReadTimeout, Net::ReadTimeout, Net::ReadTimeout ], reply("Metin")) do
+      error = assert_raises(LlmError) { @llm.write(card: @card, worker: @worker, prompt: "x") }
+      assert_match(/2 deneme/, error.message)
+    end
+
+    assert_equal 2, calls
+  end
+
+  test "the retry waits for the retry delay" do
+    llm = GroqLlm.new(api_key: "test-key", retry_delay: 0.25)
+    slept = []
+
+    llm.define_singleton_method(:sleep) { |seconds| slept << seconds }
+    with_failing_network([ SocketError ], reply("Metin")) { llm.write(card: @card, worker: @worker, prompt: "x") }
+
+    assert_equal [ 0.25 ], slept
+  end
+
+  test "an HTTP error status is never retried" do
+    [ "400", "401", "404", "429", "500" ].each do |code|
+      http, = with_http(Response.new(code, "no")) do
+        assert_raises(LlmError) { @llm.write(card: @card, worker: @worker, prompt: "x") }
+      end
+      assert_equal 1, http.requests.size, "HTTP #{code} was retried"
     end
   end
 

@@ -11,6 +11,8 @@ module AgentBoards
     MAX_ATTEMPTS = 2
     STATES = %w[ in_review rework open ].freeze
     VERDICTS = %w[ pass revise escalate ].freeze
+    # Tolerates case, ASCII "I", a stray combining dot and leading punctuation.
+    MISSING_INFO = /\A[^[:alnum:]]*B[İIiı]̇?LG[İIiı]̇?\s+EKS[İIiı]̇?K\s*:\s*(.*)\z/mi
 
     # Takes an open card for the worker. Only one of several competing workers gets true.
     def self.claim(card, worker)
@@ -108,7 +110,10 @@ module AgentBoards
         output = @llm.write(card: card, worker: worker, prompt: Prompts.write(card, worker)).to_s.strip
         attempts = card.attempts + 1
 
-        if card.output.present? && same_text?(card.output, output)
+        if (question = missing_info_question(output))
+          card.agent_transition!(:needs_human, attempts: attempts, output: output, feedback: question)
+          log(card, "question", "Ajan insana soru sordu: #{question}", actor: worker, attempts: attempts, question: question)
+        elsif card.output.present? && same_text?(card.output, output)
           card.agent_transition!(:needs_human, attempts: attempts)
           log(card, "loop", "#{worker.name} öncekiyle aynı çıktıyı yeniden teslim etti; insana devredildi.", actor: worker, attempts: attempts)
         else
@@ -120,6 +125,7 @@ module AgentBoards
       def apply_review(card, mentor, result)
         worker = card.assignee
         data = { verdict: result[:verdict], criteria: result[:criteria], lesson: result[:lesson] }
+        data[:overridden_from] = result[:overridden_from] if result[:overridden_from]
 
         case result[:verdict]
         when "pass"
@@ -132,7 +138,8 @@ module AgentBoards
             log(card, "watchdog", "#{card.attempts}. denemede de düzelmedi; insana devredildi.", actor: mentor, **data)
           else
             card.agent_transition!(:rework, feedback: result[:feedback])
-            log(card, "revised", "#{mentor.name} düzeltme istedi.", actor: mentor, **data)
+            message = result[:overridden_from] ? "#{mentor.name} pass dedi ama karşılanmayan kriter var; düzeltme istendi." : "#{mentor.name} düzeltme istedi."
+            log(card, "revised", message, actor: mentor, **data)
           end
         when "escalate"
           card.agent_transition!(:needs_human, feedback: result[:feedback])
@@ -153,12 +160,25 @@ module AgentBoards
         criteria = result[:criteria].is_a?(Array) ? result[:criteria] : []
         criteria = criteria.grep(Hash).map(&:with_indifferent_access).select { |criterion| item_ids.include?(criterion[:item_id].to_i) }
 
-        {
-          verdict: verdict,
-          criteria: criteria.map { |c| { item_id: c[:item_id].to_i, met: c[:met] == true, reason: c[:reason].to_s } },
-          feedback: result[:feedback].to_s.presence,
-          lesson: result[:lesson].to_s.presence
-        }
+        criteria = criteria.map { |c| { item_id: c[:item_id].to_i, met: c[:met] == true, reason: c[:reason].to_s } }
+        normalized = { verdict: verdict, criteria: criteria, feedback: result[:feedback].to_s.presence, lesson: result[:lesson].to_s.presence }
+        enforce_criteria(normalized, card)
+      end
+
+      # A pass is only a pass when no criterion was marked unmet.
+      def enforce_criteria(result, card)
+        unmet = result[:criteria].reject { |criterion| criterion[:met] }
+        return result unless result[:verdict] == "pass" && unmet.any?
+
+        contents = card.checklist_items.index_by(&:id)
+        listed = unmet.map { |criterion| contents[criterion[:item_id]].content }.join("; ")
+        result.merge(verdict: "revise", overridden_from: "pass", feedback: result[:feedback] || "Karşılanmayan kriterler: #{listed}")
+      end
+
+      # "BİLGİ EKSİK: <question>" at the very start of a delivery means the worker is asking a person.
+      def missing_info_question(output)
+        match = output.match(MISSING_INFO)
+        match && (match[1].squish.presence || "Eksik bilgi belirtilmedi.")
       end
 
       def log(card, kind, message, actor: nil, **data)
