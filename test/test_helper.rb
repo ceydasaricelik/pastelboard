@@ -14,6 +14,15 @@ module ActiveSupport
 
     # Add more helper methods to be used by all tests here...
 
+    # Replaces a class method for the length of the block (minitest/mock is a separate gem in Minitest 6).
+    def stub_class_method(klass, name, replacement)
+      original = klass.method(name)
+      klass.define_singleton_method(name) { |*args, **options, &block| replacement.call(*args, **options, &block) }
+      yield
+    ensure
+      klass.define_singleton_method(name, original)
+    end
+
     # An agent board with its fixed lists, a mentor and the given number of workers.
     def create_agent_board(workers: 1)
       board = Board.create!(name: "Ajan panosu", kind: :agent)

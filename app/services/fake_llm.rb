@@ -15,6 +15,11 @@ class FakeLlm
     @prompts = []
   end
 
+  # Lets the board mark its events as simulation.
+  def simulated?
+    true
+  end
+
   def write(card:, worker:, prompt:)
     @prompts << { kind: :write, card_id: card.id, worker_id: worker.id, prompt: prompt }
     return next_of(@writes, "writes") if @writes

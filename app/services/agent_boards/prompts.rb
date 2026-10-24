@@ -4,11 +4,9 @@ module AgentBoards
     module_function
 
     def write(card, worker)
-      sections = [
-        "Görev: #{card.title}",
-        "Açıklama: #{card.description}",
-        "Kabul kriterleri:\n#{criteria(card)}"
-      ]
+      sections = [ "Görev: #{card.title}" ]
+      sections << "Açıklama: #{card.description}" if card.description.present?
+      sections << "Kabul kriterleri:\n#{criteria(card)}"
       sections << "Önceki geri bildirim:\n#{card.feedback}" if card.feedback.present?
       sections << "Ders defterin:\n#{worker.lessons}" if worker.lessons.present?
       sections << "Yalnızca teslim edilecek metni yaz."
